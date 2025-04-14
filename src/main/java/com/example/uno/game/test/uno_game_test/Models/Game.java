@@ -9,6 +9,7 @@ public class Game {
     private int currentPlayerIndex;
     private boolean isClockwise;
     private Card.Color currentColor;
+    private boolean clockwise;
 
     public Game(int numPlayers) {
         deck = new Deck();
@@ -124,7 +125,7 @@ public class Game {
                 nextPlayer();
                 break;
 
-            case WILD_DRAW_FOUR:
+            case DRAW_FOUR:
                 // currentColor will be set by the player
                 nextPlayer();
                 // Next player draws 4 cards
@@ -137,7 +138,7 @@ public class Game {
         }
     }
 
-    private void nextPlayer() {
+    public void nextPlayer() {
         if (isClockwise) {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
         } else {
@@ -166,4 +167,8 @@ public class Game {
     public List<Player> getPlayers() {
         return players;
     }
+
+    public boolean isClockwise() { return clockwise; }
+
+
 }

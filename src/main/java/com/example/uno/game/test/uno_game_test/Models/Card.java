@@ -6,7 +6,7 @@ public class Card {
     }
 
     public enum Type {
-        NUMBER, SKIP, REVERSE, DRAW_TWO, WILD, WILD_DRAW_FOUR
+        NUMBER, SKIP, REVERSE, DRAW_TWO, WILD, DRAW_FOUR
     }
 
     private final Color color;

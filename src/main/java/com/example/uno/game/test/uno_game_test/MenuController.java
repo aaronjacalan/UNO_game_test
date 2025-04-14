@@ -11,19 +11,10 @@ import javafx.stage.Stage;
 import java.util.Optional;
 
 public class MenuController {
-    @FXML private Button singleplayerButton;
-    @FXML private Button multiplayerButton;
+    @FXML protected Button singleplayerButton;
+    @FXML protected Button multiplayerButton;
 
-    @FXML
-    private void initialize() {
-        // Set up Singleplayer button
-        singleplayerButton.setOnAction(e -> handleSingleplayer());
-
-        // Set up Multiplayer button
-        multiplayerButton.setOnAction(e -> handleMultiplayer());
-    }
-
-    private void handleSingleplayer() {
+    @FXML protected void handleSingleplayer() {
         // Prompt user to input the number of players (1-7)
         TextInputDialog dialog = new TextInputDialog("1");
         dialog.setTitle("Singleplayer Setup");
@@ -46,7 +37,7 @@ public class MenuController {
         });
     }
 
-    private void handleMultiplayer() {
+    @FXML protected void handleMultiplayer() {
         // For now, just show a placeholder message
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Multiplayer Mode");

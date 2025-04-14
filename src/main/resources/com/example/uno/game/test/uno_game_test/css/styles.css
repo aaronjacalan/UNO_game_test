@@ -1,0 +1,210 @@
+/* Main Game Styles */
+.root {
+    -fx-font-family: 'Arial';
+}
+
+#gameBackground {
+    -fx-background-color: linear-gradient(to bottom, #303030, #202020);
+}
+
+/* Header Styles */
+.header-section {
+    -fx-background-color: #1a1a1a;
+    -fx-padding: 10px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 10, 0, 0, 4);
+}
+
+.game-title {
+    -fx-text-fill: #FF9500;
+    -fx-font-weight: bold;
+}
+
+.game-info {
+    -fx-background-color: #2a2a2a;
+    -fx-padding: 8px 15px;
+    -fx-background-radius: 5px;
+}
+
+.game-info Label {
+    -fx-text-fill: white;
+}
+
+.highlight-text {
+    -fx-text-fill: #FF9500;
+    -fx-font-weight: bold;
+}
+
+/* Game Area Styles */
+.game-area {
+    -fx-background-color: #252525;
+    -fx-padding: 20px;
+}
+
+/* Opponent Section Styles */
+.opponent-section {
+    -fx-padding: 10px;
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background-radius: 10px;
+}
+
+.opponent-container {
+    -fx-padding: 10px;
+    -fx-background-color: rgba(40, 40, 40, 0.7);
+    -fx-background-radius: 8px;
+    -fx-min-width: 150px;
+}
+
+.player-name {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.card-hand {
+    -fx-padding: 5px;
+}
+
+/* Game Table Styles */
+.game-table {
+    -fx-background-color: #1E6B52;
+    -fx-background-radius: 100%;
+    -fx-min-height: 250px;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.5), 15, 0, 0, 0);
+}
+
+.card-pile {
+    -fx-padding: 10px;
+    -fx-background-color: rgba(0, 0, 0, 0.15);
+    -fx-background-radius: 10px;
+}
+
+.pile-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.deck-container, .discard-container {
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);
+}
+
+.deck-count {
+    -fx-background-color: #ff4500;
+    -fx-text-fill: white;
+    -fx-background-radius: 50%;
+    -fx-padding: 5px 10px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 4, 0, 0, 0);
+}
+
+.card-image {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 0);
+    -fx-cursor: hand;
+}
+
+/* Status Overlay */
+.status-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.7);
+    -fx-background-radius: 20px;
+    -fx-padding: 20px 40px;
+}
+
+.overlay-text {
+    -fx-font-size: 48px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FF9500;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 4, 0, 0, 0);
+}
+
+/* Button Styles */
+.game-button {
+    -fx-background-color: #2E86C1;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 15px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.game-button:hover {
+    -fx-background-color: #3498DB;
+}
+
+.game-button:pressed {
+    -fx-background-color: #1A5276;
+}
+
+.uno-button {
+    -fx-background-color: #FF4500;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-padding: 10px 25px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.uno-button:hover {
+    -fx-background-color: #FF6347;
+}
+
+.uno-button:pressed {
+    -fx-background-color: #B22222;
+}
+
+.icon-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-cursor: hand;
+}
+
+.icon-button:hover {
+    -fx-text-fill: #FF9500;
+}
+
+/* Status Section */
+.status-section {
+    -fx-padding: 10px;
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 5px;
+}
+
+.status-text {
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-style: italic;
+}
+
+/* Player Hand Section */
+.player-section {
+    -fx-padding: 10px;
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-background-radius: 8px 8px 0 0;
+}
+
+.hand-scroll {
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background: transparent;
+    -fx-background-radius: 0 0 8px 8px;
+}
+
+.yourHandScrollPane {
+    -fx-background: transparent;
+}
+
+.hand-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.player-hand {
+    -fx-padding: 15px 5px;
+    -fx-min-height: 160px;
+}
+
+/* Footer */
+.footer {
+    -fx-background-color: #1a1a1a;
+    -fx-padding: 5px;
+}

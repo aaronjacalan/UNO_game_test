@@ -39,7 +39,7 @@ public class Deck {
         // Add wild cards (4 of each)
         for (int i = 0; i < 4; i++) {
             cards.add(new Card(Card.Color.WILD, Card.Type.WILD, -1));
-            cards.add(new Card(Card.Color.WILD, Card.Type.WILD_DRAW_FOUR, -1));
+            cards.add(new Card(Card.Color.WILD, Card.Type.DRAW_FOUR, -1));
         }
     }
 
