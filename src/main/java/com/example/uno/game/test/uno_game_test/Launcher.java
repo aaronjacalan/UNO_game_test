@@ -12,7 +12,6 @@ public class Launcher extends Application {
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(Launcher.class.getResource("MenuUI.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 900, 690);
-        stage.setResizable(false);
         stage.setTitle("PLAY UNO");
         stage.setScene(scene);
         stage.show();

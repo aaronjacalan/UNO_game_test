@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -22,13 +23,14 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GameController implements Initializable {
     // Main UI components
     @FXML private VBox gamePane;
     @FXML private HBox playerHand;
     @FXML private ScrollPane yourHandScrollPane;
-    @FXML private HBox opponentArea;
+    @FXML private GridPane opponentArea;
     @FXML private Label statusLabel;
 
     // Game table components
@@ -50,18 +52,27 @@ public class GameController implements Initializable {
     @FXML private Button unoButton;
     @FXML private Button skipButton;
     @FXML private Button challengeButton;
+    @FXML private Button settingsBtn;
+    @FXML private Button helpBtn;
 
-    // Opponent components
+    // Opponent components - now extended for up to 8 players
     @FXML private HBox opponent1Hand;
     @FXML private HBox opponent2Hand;
     @FXML private HBox opponent3Hand;
+    @FXML private HBox opponent4Hand;
+    @FXML private HBox opponent5Hand;
+    @FXML private HBox opponent6Hand;
+    @FXML private HBox opponent7Hand;
+    @FXML private HBox opponent8Hand;
+
     @FXML private Label opponent1CardCount;
     @FXML private Label opponent2CardCount;
     @FXML private Label opponent3CardCount;
-
-    // Settings and help buttons
-    @FXML private Button settingsBtn;
-    @FXML private Button helpBtn;
+    @FXML private Label opponent4CardCount;
+    @FXML private Label opponent5CardCount;
+    @FXML private Label opponent6CardCount;
+    @FXML private Label opponent7CardCount;
+    @FXML private Label opponent8CardCount;
 
     // Game state
     private Game game;
@@ -76,8 +87,15 @@ public class GameController implements Initializable {
     private final Map<String, Image> cardImageCache = new HashMap<>();
     private Image cardBackImage;
 
+    // Arrays to store opponent UI elements
+    private HBox[] opponentHands;
+    private Label[] opponentCardCounts;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Initialize arrays for opponent UI components
+        initializeOpponentArrays();
+
         // Initialize game with default 4 players (1 human + 3 computer)
         game = new Game(4);
         deckCount = calculateDeckCount();
@@ -95,6 +113,27 @@ public class GameController implements Initializable {
         checkAndStartComputerTurn();
     }
 
+    private void initializeOpponentArrays() {
+        // Initialize arrays for opponent hands and card counts
+        opponentHands = new HBox[]{
+                opponent1Hand, opponent2Hand, opponent3Hand, opponent4Hand,
+                opponent5Hand, opponent6Hand, opponent7Hand, opponent8Hand
+        };
+
+        opponentCardCounts = new Label[]{
+                opponent1CardCount, opponent2CardCount, opponent3CardCount, opponent4CardCount,
+                opponent5CardCount, opponent6CardCount, opponent7CardCount, opponent8CardCount
+        };
+
+        // Initialize each hand container
+        for (HBox hand : opponentHands) {
+            if (hand != null) {
+                hand.setSpacing(2);
+                hand.setAlignment(Pos.CENTER);
+            }
+        }
+    }
+
     private int calculateDeckCount() {
         // Calculate remaining cards in deck: 108 total - cards in hands - 1 discard
         int cardsInHands = 0;
@@ -109,7 +148,6 @@ public class GameController implements Initializable {
             cardBackImage = new Image(getClass().getResourceAsStream("/images/cards/card_back.png"));
         } catch (Exception e) {
             System.err.println("Error loading card back image: " + e.getMessage());
-            // Create a fallback card back
             cardBackImage = null;
         }
     }
@@ -179,8 +217,8 @@ public class GameController implements Initializable {
         playerUnoCallMap.clear();
         playerSkipAllowedMap.clear();
 
-        // Create new game with specified players
-        game = new Game(Math.max(2, Math.min(numPlayers, 10))); // Limit between 2-10 players
+        // Create new game with specified players (limit between 2-8 players for UI)
+        game = new Game(Math.max(2, Math.min(numPlayers, 8)));
 
         // Initialize UNO call map for all players
         for (Player player : game.getPlayers()) {
@@ -193,7 +231,10 @@ public class GameController implements Initializable {
         lastDrawnCard = null;
         canPlayDrawnCard = false;
 
-        // Update UI
+        // Update UI to reflect the new player count
+        updateOpponentVisibility();
+
+        // Update UI with new game state
         updateUI();
 
         // Show start game notification
@@ -201,6 +242,31 @@ public class GameController implements Initializable {
 
         // Start computer turns if needed
         checkAndStartComputerTurn();
+    }
+
+    /**
+     * Updates visibility of opponent containers based on player count
+     */
+    private void updateOpponentVisibility() {
+        int opponentCount = game.getPlayers().size() - 1; // -1 because one player is human
+
+        // Show only active opponents, hide the rest
+        for (int i = 0; i < opponentHands.length; i++) {
+            boolean visible = i < opponentCount;
+
+            // Find the parent container in the GridPane (StackPane or VBox)
+            int rowIndex = i / 4; // 0 for first row, 1 for second row
+            int colIndex = i % 4; // 0-3 for the columns
+
+            // Find the parent VBox in the GridPane
+            opponentArea.getChildren().stream()
+                    .filter(node -> GridPane.getRowIndex(node) == rowIndex && GridPane.getColumnIndex(node) == colIndex)
+                    .findFirst()
+                    .ifPresent(container -> {
+                        container.setVisible(visible);
+                        container.setManaged(visible);
+                    });
+        }
     }
 
     private void updateUI() {
@@ -225,7 +291,7 @@ public class GameController implements Initializable {
 
     private void updatePlayerHand() {
         playerHand.getChildren().clear();
-        Player humanPlayer = game.getPlayers().get(0);
+        Player humanPlayer = game.getPlayers().getFirst();
 
         for (int i = 0; i < humanPlayer.getHand().size(); i++) {
             Card card = humanPlayer.getHand().get(i);
@@ -233,19 +299,33 @@ public class GameController implements Initializable {
 
             // Create card view with a wrapper to manage interactions better
             StackPane cardContainer = new StackPane();
+            cardContainer.setPrefSize(90, 130); // Fixed container size to prevent layout shifts
+            cardContainer.setMinSize(90, 130);  // Ensure container stays same size even when card scales
+
             ImageView cardView = createCardImageView(card);
             cardContainer.getChildren().add(cardView);
 
-            // Add hover effect to the container
+            // Set the alignment to center to keep the card centered during scaling
+            StackPane.setAlignment(cardView, Pos.CENTER);
+
+            // Adjust hover behavior to prevent layout shifts
             cardContainer.setOnMouseEntered(e -> {
+                // Prevent event from being passed to the scroll pane
+                e.consume();
+
                 ScaleTransition st = new ScaleTransition(Duration.millis(100), cardView);
                 st.setToY(1.1);
                 st.setToX(1.1);
                 st.play();
+
+                // Use the toFront() on the container instead of just the card
                 cardContainer.toFront();
             });
 
             cardContainer.setOnMouseExited(e -> {
+                // Prevent event from being passed to the scroll pane
+                e.consume();
+
                 ScaleTransition st = new ScaleTransition(Duration.millis(100), cardView);
                 st.setToY(1.0);
                 st.setToX(1.0);
@@ -253,52 +333,46 @@ public class GameController implements Initializable {
             });
 
             // Add click event for playing this card
-            cardContainer.setOnMouseClicked(e -> handleCardClick(cardIndex));
+            cardContainer.setOnMouseClicked(e -> {
+                e.consume(); // Prevent click from propagating to scroll pane
+                handleCardClick(cardIndex);
+            });
 
             // Set margin to ensure proper spacing
-            HBox.setMargin(cardContainer, new javafx.geometry.Insets(0, 5, 0, 5));
+            HBox.setMargin(cardContainer, new javafx.geometry.Insets(0, -5, 0, -5)); // Tighter margin to accommodate the fixed container size
 
             // Add to player hand
             playerHand.getChildren().add(cardContainer);
         }
 
         // Ensure ScrollPane shows the hand correctly
-        playerHand.setSpacing(5);
+        playerHand.setSpacing(0); // Use container margins instead of spacing
+
+        // Disable the automatic scrolling during hover to prevent jumps
+        yourHandScrollPane.setPannable(true); // Allow manual panning
+        yourHandScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Show scrollbar when needed
+
+        // Reset scroll position to the start
         Platform.runLater(() -> yourHandScrollPane.setHvalue(0));
     }
 
     private void updateOpponentsArea() {
-        // Clear existing opponent hands
-        opponent1Hand.getChildren().clear();
-        opponent2Hand.getChildren().clear();
-        opponent3Hand.getChildren().clear();
-
-        // We only show up to 3 opponents in the UI (can be extended for more)
-        int shownOpponents = Math.min(game.getPlayers().size() - 1, 3);
-
-        for (int i = 0; i < shownOpponents; i++) {
-            Player opponent = game.getPlayers().get(i + 1);
-            HBox opponentHand = null;
-            Label opponentCardCount = null;
-
-            // Select the correct opponent container
-            switch(i) {
-                case 0:
-                    opponentHand = opponent1Hand;
-                    opponentCardCount = opponent1CardCount;
-                    break;
-                case 1:
-                    opponentHand = opponent2Hand;
-                    opponentCardCount = opponent2CardCount;
-                    break;
-                case 2:
-                    opponentHand = opponent3Hand;
-                    opponentCardCount = opponent3CardCount;
-                    break;
+        // Clear all opponent hands
+        for (HBox hand : opponentHands) {
+            if (hand != null) {
+                hand.getChildren().clear();
             }
+        }
 
-            if (opponentHand != null) {
-                updateOpponentHandUI(opponent, opponentHand, opponentCardCount);
+        // Get total opponent count
+        int opponentCount = game.getPlayers().size() - 1; // Exclude human player
+
+        // Update each visible opponent
+        for (int i = 0; i < opponentCount; i++) {
+            Player opponent = game.getPlayers().get(i + 1); // +1 to skip human player
+
+            if (i < opponentHands.length && opponentHands[i] != null && opponentCardCounts[i] != null) {
+                updateOpponentHandUI(opponent, opponentHands[i], opponentCardCounts[i]);
             }
         }
     }
@@ -307,12 +381,12 @@ public class GameController implements Initializable {
         // Add card backs for each card in opponent's hand (max 7 shown)
         for (int j = 0; j < Math.min(opponent.getHand().size(), 7); j++) {
             ImageView cardBack = new ImageView(cardBackImage);
-            cardBack.setFitHeight(50); // Smaller cards for opponents
-            cardBack.setFitWidth(35);
+            cardBack.setFitHeight(40); // Smaller cards for opponents
+            cardBack.setFitWidth(28);
             cardBack.setPreserveRatio(true);
 
             // Offset cards slightly to show depth
-            cardBack.setTranslateX(-j * 10);
+            cardBack.setTranslateX(-j * 8);
 
             // Highlight current player
             if (game.getCurrentPlayer() == opponent) {
@@ -370,7 +444,7 @@ public class GameController implements Initializable {
             deckView.setCursor(javafx.scene.Cursor.HAND);
 
             // Add subtle glow effect when it's the player's turn
-            if (game.getCurrentPlayer() == game.getPlayers().get(0)) {
+            if (game.getCurrentPlayer() == game.getPlayers().getFirst()) {
                 javafx.scene.effect.DropShadow glow = new javafx.scene.effect.DropShadow();
                 glow.setColor(Color.GOLD);
                 glow.setWidth(20);
@@ -384,7 +458,7 @@ public class GameController implements Initializable {
 
     private boolean isDeckViewDisabled() {
         Player currentPlayer = game.getCurrentPlayer();
-        boolean isHumanTurn = (currentPlayer == game.getPlayers().get(0));
+        boolean isHumanTurn = (currentPlayer == game.getPlayers().getFirst());
         return !isHumanTurn || canPlayDrawnCard;
     }
 
@@ -394,7 +468,7 @@ public class GameController implements Initializable {
         currentPlayerLabel.setText(currentPlayer.getName());
 
         // Highlight if it's the human player's turn
-        if (currentPlayer == game.getPlayers().get(0)) {
+        if (currentPlayer == game.getPlayers().getFirst()) {
             currentPlayerLabel.setStyle("-fx-text-fill: #FF9500; -fx-font-weight: bold;");
         } else {
             currentPlayerLabel.setStyle("-fx-text-fill: white;");
@@ -410,7 +484,7 @@ public class GameController implements Initializable {
         cardsLeftCount.setText(String.valueOf(totalCardsInHands));
 
         // Update status text
-        if (currentPlayer == game.getPlayers().get(0)) {
+        if (currentPlayer == game.getPlayers().getFirst()) {
             statusLabel.setText(canPlayDrawnCard ?
                     "Play the card you just drew or pass your turn." :
                     "Your turn! Play a card or click the deck to draw.");
@@ -421,17 +495,17 @@ public class GameController implements Initializable {
 
     private void updateActionControls() {
         Player currentPlayer = game.getCurrentPlayer();
-        boolean isHumanTurn = (currentPlayer == game.getPlayers().get(0));
+        boolean isHumanTurn = (currentPlayer == game.getPlayers().getFirst());
 
         // Skip button (only enabled when allowed to skip)
         skipButton.setDisable(!isHumanTurn || !playerSkipAllowedMap.getOrDefault(currentPlayer, false));
 
         // UNO button is enabled when human has 2 cards (about to play second-to-last card)
-        unoButton.setDisable(game.getPlayers().get(0).getHand().size() != 2);
+        unoButton.setDisable(game.getPlayers().getFirst().getHand().size() != 2);
 
         // Challenge button is enabled when any opponent has one card but didn't call UNO
         boolean canChallenge = game.getPlayers().stream()
-                .anyMatch(player -> player != game.getPlayers().get(0) && // Not human
+                .anyMatch(player -> player != game.getPlayers().getFirst() && // Not human
                         player.getHand().size() == 1 &&                // Has one card
                         !playerUnoCallMap.getOrDefault(player, false)); // Didn't call UNO
         challengeButton.setDisable(!canChallenge);
@@ -440,8 +514,9 @@ public class GameController implements Initializable {
         updateDeck();
     }
 
+    @FXML
     private void handleCardClick(int cardIndex) {
-        Player humanPlayer = game.getPlayers().get(0);
+        Player humanPlayer = game.getPlayers().getFirst();
 
         if (game.getCurrentPlayer() != humanPlayer) {
             // Not player's turn
@@ -555,8 +630,9 @@ public class GameController implements Initializable {
         }
     }
 
-    private void handleDrawCard() {
-        Player humanPlayer = game.getPlayers().get(0);
+    @FXML
+    public void handleDrawCard() {
+        Player humanPlayer = game.getPlayers().getFirst();
 
         if (game.getCurrentPlayer() != humanPlayer) {
             // Not player's turn
@@ -616,8 +692,9 @@ public class GameController implements Initializable {
         }
     }
 
-    private void callUno() {
-        Player humanPlayer = game.getPlayers().get(0);
+    @FXML
+    public void callUno() {
+        Player humanPlayer = game.getPlayers().getFirst();
 
         // Only allow UNO call when player has exactly 2 cards
         if (humanPlayer.getHand().size() == 2) {
@@ -628,10 +705,11 @@ public class GameController implements Initializable {
         }
     }
 
-    private void skipTurn() {
+    @FXML
+    public void skipTurn() {
         Player currentPlayer = game.getCurrentPlayer();
 
-        if (currentPlayer != game.getPlayers().get(0)) {
+        if (currentPlayer != game.getPlayers().getFirst()) {
             // Not human's turn
             return;
         }
@@ -650,10 +728,11 @@ public class GameController implements Initializable {
         checkAndStartComputerTurn();
     }
 
-    private void challengeUno() {
+    @FXML
+    public void challengeUno() {
         // Find an opponent with one card who didn't call UNO
         for (Player opponent : game.getPlayers()) {
-            if (opponent != game.getPlayers().get(0) &&
+            if (opponent != game.getPlayers().getFirst() &&
                     opponent.getHand().size() == 1 &&
                     !playerUnoCallMap.getOrDefault(opponent, false)) {
 
@@ -681,10 +760,10 @@ public class GameController implements Initializable {
         dialog.setHeaderText("Select a color for the " + wildType.toString().replace("_", " ") + " card");
 
         // Create color buttons with better styling
-        Button redButton = createColorButton("RED", "#E53935", Card.Color.RED, dialog);
-        Button blueButton = createColorButton("BLUE", "#1E88E5", Card.Color.BLUE, dialog);
-        Button greenButton = createColorButton("GREEN", "#43A047", Card.Color.GREEN, dialog);
-        Button yellowButton = createColorButton("YELLOW", "#FDD835", Card.Color.YELLOW, dialog);
+        Button redButton = createColorButton("RED", "#EC5D66", Card.Color.RED, dialog);
+        Button blueButton = createColorButton("BLUE", "#3B6EEE", Card.Color.BLUE, dialog);
+        Button greenButton = createColorButton("GREEN", "#3BCD80", Card.Color.GREEN, dialog);
+        Button yellowButton = createColorButton("YELLOW", "#F4BE67", Card.Color.YELLOW, dialog);
 
         // Create a 2x2 grid of color buttons
         HBox topRow = new HBox(10, redButton, blueButton);
@@ -887,12 +966,12 @@ public class GameController implements Initializable {
         }
 
         // Map index back to Color enum
-        switch (maxIndex) {
-            case 0: return Card.Color.RED;
-            case 1: return Card.Color.BLUE;
-            case 2: return Card.Color.GREEN;
-            default: return Card.Color.YELLOW;
-        }
+        return switch (maxIndex) {
+            case 0 -> Card.Color.RED;
+            case 1 -> Card.Color.BLUE;
+            case 2 -> Card.Color.GREEN;
+            default -> Card.Color.YELLOW;
+        };
     }
 
     private boolean checkGameStatus() {
@@ -911,13 +990,13 @@ public class GameController implements Initializable {
         alert.setTitle("Game Over");
         alert.setHeaderText(winner.getName() + " Wins!");
 
-        String contentText = "Final scores:\n";
+        StringBuilder contentText = new StringBuilder("Final scores:\n");
         for (Player player : game.getPlayers()) {
             int score = calculateScore(player);
-            contentText += player.getName() + ": " + score + " points\n";
+            contentText.append(player.getName()).append(": ").append(score).append(" points\n");
         }
 
-        alert.setContentText(contentText);
+        alert.setContentText(contentText.toString());
 
         ButtonType newGameButton = new ButtonType("New Game");
         ButtonType quitButton = new ButtonType("Quit");
@@ -1019,21 +1098,15 @@ public class GameController implements Initializable {
     }
 
     private String cardImageKey(Card card) {
-        if (card.getType() == Card.Type.NUMBER) {
-            return card.getColor() + "_" + card.getNumber();
-        } else {
-            return card.getColor() + "_" + card.getType();
-        }
+        if (card.getType() == Card.Type.NUMBER) return card.getColor() + "_" + card.getNumber();
+        else return card.getColor() + "_" + card.getType();
     }
 
     private String cardImageFilename(Card card) {
         String color = card.getColor().toString().toLowerCase();
 
-        if (card.getType() == Card.Type.NUMBER) {
-            return color + "_" + card.getNumber() + ".png";
-        } else {
-            return color + "_" + card.getType().toString().toLowerCase() + ".png";
-        }
+        if (card.getType() == Card.Type.NUMBER) return color + "_" + card.getNumber() + ".png";
+        else return color + "_" + card.getType().toString().toLowerCase() + ".png";
     }
 
     private Image createFallbackCardImage(Card card) {
@@ -1068,17 +1141,17 @@ public class GameController implements Initializable {
     }
 
     private Color getCardColor(Card.Color cardColor) {
-        switch (cardColor) {
-            case RED: return Color.rgb(219, 50, 54);
-            case BLUE: return Color.rgb(0, 101, 189);
-            case GREEN: return Color.rgb(60, 174, 63);
-            case YELLOW: return Color.rgb(254, 231, 21);
-            case WILD: return Color.BLACK;
-            default: return Color.GRAY;
-        }
+        return switch (cardColor) {
+            case RED -> Color.rgb(219, 50, 54);
+            case BLUE -> Color.rgb(0, 101, 189);
+            case GREEN -> Color.rgb(60, 174, 63);
+            case YELLOW -> Color.rgb(254, 231, 21);
+            case WILD -> Color.BLACK;
+        };
     }
 
-    private void showSettingsDialog() {
+    @FXML
+    public void showSettingsDialog() {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Settings");
         dialog.setHeaderText("Game Settings");
@@ -1088,7 +1161,7 @@ public class GameController implements Initializable {
         playerCountBox.setAlignment(Pos.CENTER);
         Label playerCountLabel = new Label("Number of Players:");
         ComboBox<Integer> playerCountCombo = new ComboBox<>();
-        playerCountCombo.getItems().addAll(2, 3, 4, 5, 6);
+        playerCountCombo.getItems().addAll(2, 3, 4, 5, 6, 7, 8); // Extended to 8 players
         playerCountCombo.setValue(game.getPlayers().size());
         playerCountBox.getChildren().addAll(playerCountLabel, playerCountCombo);
 
@@ -1138,39 +1211,105 @@ public class GameController implements Initializable {
         dialog.showAndWait();
     }
 
-    private void showHelpDialog() {
+    @FXML
+    public void showHelpDialog() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("UNO Help");
         alert.setHeaderText("How to Play UNO");
 
         String helpText =
-                "OBJECTIVE:\n" +
-                        "Be the first player to get rid of all your cards.\n\n" +
-
-                        "CARD TYPES:\n" +
-                        "• Number cards (0-9): Match by color or number\n" +
-                        "• Skip: Next player loses their turn\n" +
-                        "• Reverse: Changes direction of play\n" +
-                        "• Draw Two: Next player draws 2 cards and loses their turn\n" +
-                        "• Wild: Change the current color\n" +
-                        "• Wild Draw Four: Next player draws 4 cards, loses their turn, and you change the color\n\n" +
-
-                        "GAME PLAY:\n" +
-                        "1. Match the top card by color, number, or symbol\n" +
-                        "2. If you can't play, click on the deck to draw a card\n" +
-                        "3. When you have only one card left, press the UNO button\n" +
-                        "4. If someone forgets to call UNO, use the Challenge button\n\n" +
-
-                        "SCORING:\n" +
-                        "• Number cards: Face value\n" +
-                        "• Skip/Reverse/Draw Two: 20 points\n" +
-                        "• Wild/Wild Draw Four: 50 points";
+                """
+                        OBJECTIVE:
+                        Be the first player to get rid of all your cards.
+                        
+                        CARD TYPES:
+                        • Number cards (0-9): Match by color or number
+                        • Skip: Next player loses their turn
+                        • Reverse: Changes direction of play
+                        • Draw Two: Next player draws 2 cards and loses their turn
+                        • Wild: Change the current color
+                        • Wild Draw Four: Next player draws 4 cards, loses their turn, and you change the color
+                        
+                        GAME PLAY:
+                        1. Match the top card by color, number, or symbol
+                        2. If you can't play, click on the deck to draw a card
+                        3. When you have only one card left, press the UNO button
+                        4. If someone forgets to call UNO, use the Challenge button
+                        
+                        SCORING:
+                        • Number cards: Face value
+                        • Skip/Reverse/Draw Two: 20 points
+                        • Wild/Wild Draw Four: 50 points""";
 
         alert.setContentText(helpText);
         alert.showAndWait();
     }
 
     public void shutdown() {
-        computerPlayerTimer.shutdown();
+        if (computerPlayerTimer != null) {
+            computerPlayerTimer.shutdownNow();
+            try {
+                computerPlayerTimer.awaitTermination(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    /**
+     * Method to handle window resizing events
+     * This can be called when the window size changes
+     */
+    public void handleWindowResize() {
+        // Adjust card sizes based on the current window size
+        adaptCardSizesToWindowSize();
+
+        // Update the UI
+        updateUI();
+    }
+
+    /**
+     * Adapts card and layout sizes based on the current window dimensions
+     */
+    private void adaptCardSizesToWindowSize() {
+        if (gamePane == null) return;
+
+        // Get the current window dimensions
+        double width = gamePane.getWidth();
+        double height = gamePane.getHeight();
+
+        // Scale card sizes for different screens
+        double cardScale = Math.min(width / 900.0, height / 690.0);
+
+        // Adjust player card size
+        double playerCardHeight = Math.max(80, Math.min(120, 120 * cardScale));
+        double playerCardWidth = playerCardHeight * 0.67; // Maintain 2:3 aspect ratio
+
+        // Adjust opponent card size
+        double opponentCardHeight = Math.max(30, Math.min(40, 40 * cardScale));
+        double opponentCardWidth = opponentCardHeight * 0.7;
+
+        // Apply new sizes to all cards
+        for (javafx.scene.Node node : playerHand.getChildren()) {
+            if (node instanceof StackPane container) {
+                if (!container.getChildren().isEmpty() && container.getChildren().getFirst() instanceof ImageView cardView) {
+                    cardView.setFitHeight(playerCardHeight);
+                    cardView.setFitWidth(playerCardWidth);
+                }
+            }
+        }
+
+        // Update spacing based on window size
+        playerHand.setSpacing(Math.max(2, Math.min(10, 5 * cardScale)));
+
+        // Update discardPileView and deckView sizes
+        double tableCardHeight = Math.max(100, Math.min(160, 160 * cardScale));
+        double tableCardWidth = tableCardHeight * 0.6875;
+
+        discardPileView.setFitHeight(tableCardHeight);
+        discardPileView.setFitWidth(tableCardWidth);
+
+        deckView.setFitHeight(tableCardHeight);
+        deckView.setFitWidth(tableCardWidth);
     }
 }

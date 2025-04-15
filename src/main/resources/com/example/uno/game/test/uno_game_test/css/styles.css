@@ -1,210 +1,275 @@
-/* Main Game Styles */
+/* Base styling */
 .root {
     -fx-font-family: 'Arial';
+    -fx-font-size: 14px;
+    -fx-background-color: #f0f0f0;
 }
 
+/* Game background */
 #gameBackground {
-    -fx-background-color: linear-gradient(to bottom, #303030, #202020);
+    -fx-background-color: linear-gradient(to bottom, #2c3e50, #4ca1af);
 }
 
-/* Header Styles */
+/* Header section - Now directly applied to the HBox */
 .header-section {
-    -fx-background-color: #1a1a1a;
+    -fx-background-color: rgba(0, 0, 0, 0.6);
     -fx-padding: 10px;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 10, 0, 0, 4);
-}
-
-.game-title {
-    -fx-text-fill: #FF9500;
-    -fx-font-weight: bold;
-}
-
-.game-info {
-    -fx-background-color: #2a2a2a;
-    -fx-padding: 8px 15px;
-    -fx-background-radius: 5px;
-}
-
-.game-info Label {
+    -fx-background-radius: 5;
     -fx-text-fill: white;
+    -fx-alignment: center;
 }
 
+/* Text highlighting for important game info */
 .highlight-text {
-    -fx-text-fill: #FF9500;
     -fx-font-weight: bold;
+    -fx-text-fill: #ffcc00;
 }
 
-/* Game Area Styles */
+/* Game area - Main content container */
 .game-area {
-    -fx-background-color: #252525;
-    -fx-padding: 20px;
+    -fx-spacing: 10;
+    -fx-padding: 10;
 }
 
-/* Opponent Section Styles */
+/* Opponent section */
 .opponent-section {
-    -fx-padding: 10px;
-    -fx-background-color: rgba(0, 0, 0, 0.2);
-    -fx-background-radius: 10px;
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 5;
+    -fx-padding: 10;
+    -fx-hgap: 10;
+    -fx-vgap: 10;
+}
+
+.opponent-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-height: 180;
+}
+
+.opponent-scroll .viewport {
+    -fx-background-color: transparent;
 }
 
 .opponent-container {
-    -fx-padding: 10px;
-    -fx-background-color: rgba(40, 40, 40, 0.7);
-    -fx-background-radius: 8px;
-    -fx-min-width: 150px;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+    -fx-min-width: 120;
+    -fx-max-width: 200;
+    -fx-alignment: center;
 }
 
-.player-name {
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-font-size: 14px;
+.opponent-hand-scroll {
+    -fx-background-color: transparent;
+    -fx-max-height: 60;
+}
+
+.opponent-hand-scroll .viewport {
+    -fx-background-color: transparent;
 }
 
 .card-hand {
-    -fx-padding: 5px;
+    -fx-min-height: 50;
+    -fx-alignment: center;
+    -fx-spacing: 2;
 }
 
-/* Game Table Styles */
+/* Player names */
+.player-name {
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+/* Game table */
 .game-table {
-    -fx-background-color: #1E6B52;
-    -fx-background-radius: 100%;
-    -fx-min-height: 250px;
-    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.5), 15, 0, 0, 0);
+    -fx-background-color: rgba(0, 100, 0, 0.7);
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-min-height: 200;
 }
 
 .card-pile {
-    -fx-padding: 10px;
-    -fx-background-color: rgba(0, 0, 0, 0.15);
-    -fx-background-radius: 10px;
+    -fx-padding: 10;
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background-radius: 10;
+    -fx-min-width: 130;
+    -fx-alignment: center;
+    -fx-spacing: 5;
 }
 
 .pile-label {
-    -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-font-size: 12px;
+    -fx-text-fill: white;
 }
 
 .deck-container, .discard-container {
-    -fx-background-radius: 10px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 10, 0, 0, 0);
 }
 
 .deck-count {
-    -fx-background-color: #ff4500;
     -fx-text-fill: white;
-    -fx-background-radius: 50%;
-    -fx-padding: 5px 10px;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 4, 0, 0, 0);
+    -fx-background-color: rgba(0, 0, 0, 0.6);
+    -fx-background-radius: 15;
+    -fx-padding: 5 10;
 }
 
+/* Card image */
 .card-image {
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 0);
-    -fx-cursor: hand;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
 }
 
-/* Status Overlay */
-.status-overlay {
-    -fx-background-color: rgba(0, 0, 0, 0.7);
-    -fx-background-radius: 20px;
-    -fx-padding: 20px 40px;
-}
-
-.overlay-text {
-    -fx-font-size: 48px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #FF9500;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 4, 0, 0, 0);
-}
-
-/* Button Styles */
+/* Game buttons */
 .game-button {
-    -fx-background-color: #2E86C1;
+    -fx-background-color: rgba(0, 0, 0, 0.7);
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-padding: 8px 15px;
-    -fx-background-radius: 5px;
+    -fx-background-radius: 5;
+    -fx-padding: 8 15;
     -fx-cursor: hand;
 }
 
 .game-button:hover {
-    -fx-background-color: #3498DB;
-}
-
-.game-button:pressed {
-    -fx-background-color: #1A5276;
+    -fx-background-color: rgba(0, 0, 0, 0.9);
 }
 
 .uno-button {
-    -fx-background-color: #FF4500;
+    -fx-background-color: #ff3b30;
     -fx-text-fill: white;
     -fx-font-weight: bold;
-    -fx-font-size: 18px;
-    -fx-padding: 10px 25px;
-    -fx-background-radius: 5px;
+    -fx-font-size: 16px;
+    -fx-background-radius: 5;
+    -fx-padding: 8 20;
     -fx-cursor: hand;
 }
 
 .uno-button:hover {
-    -fx-background-color: #FF6347;
+    -fx-background-color: #cc2f26;
 }
 
-.uno-button:pressed {
-    -fx-background-color: #B22222;
+/* Action area */
+.action-area {
+    -fx-spacing: 15;
+    -fx-alignment: center;
+    -fx-padding: 5;
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background-radius: 5;
+}
+
+/* Status text - Now directly on a Label */
+.status-text {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-radius: 5;
+    -fx-padding: 10;
+    -fx-alignment: center;
+}
+
+/* Player hand */
+.player-section {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 5;
+    -fx-padding: 10;
+    -fx-max-height: 180;
+    -fx-spacing: 5;
+}
+
+.hand-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 10px 0 10px 0; /* Extra padding to accommodate card scaling */
+    -fx-max-height: 150;
+    -fx-pref-height: 150;
+}
+
+.hand-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.hand-scroll .scroll-bar:horizontal {
+    -fx-opacity: 0.7;  /* Make scrollbar slightly visible */
+    -fx-pref-height: 5;
+}
+
+.player-hand {
+    -fx-padding: 10px 20px;
+    -fx-min-height: 130;
+    -fx-alignment: center;
+    -fx-spacing: 10;
+}
+
+/* Style for card containers to improve hover behavior */
+.card-container {
+    -fx-background-color: transparent;
+    -fx-padding: 5px;
+    -fx-transition: -fx-translate-y 0.2s;
+}
+
+.card-container:hover {
+    -fx-translate-y: -10;
+}
+
+/* Status overlay */
+.status-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.7);
+    -fx-background-radius: 10;
+    -fx-padding: 20;
+    -fx-alignment: center;
+}
+
+.overlay-text {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffcc00;
+}
+
+/* Footer */
+.footer {
+    -fx-background-color: rgba(0, 0, 0, 0.6);
+    -fx-padding: 10;
+    -fx-alignment: center-right;
+    -fx-spacing: 10;
 }
 
 .icon-button {
     -fx-background-color: transparent;
-    -fx-text-fill: white;
     -fx-font-size: 18px;
     -fx-cursor: hand;
 }
 
 .icon-button:hover {
-    -fx-text-fill: #FF9500;
+    -fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.7), 6, 0, 0, 0);
 }
 
-/* Status Section */
-.status-section {
-    -fx-padding: 10px;
-    -fx-background-color: rgba(0, 0, 0, 0.3);
-    -fx-background-radius: 5px;
+/* Responsive design adjustments */
+@media (max-width: 800px) {
+    .header-section {
+        -fx-spacing: 15;
+    }
+
+    .opponent-container {
+        -fx-min-width: 80;
+    }
+
+    .card-pile {
+        -fx-min-width: 110;
+    }
 }
 
-.status-text {
-    -fx-text-fill: white;
-    -fx-font-size: 15px;
-    -fx-font-style: italic;
-}
+@media (max-width: 600px) {
+    .header-section {
+        -fx-spacing: 10;
+        -fx-font-size: 12px;
+    }
 
-/* Player Hand Section */
-.player-section {
-    -fx-padding: 10px;
-    -fx-background-color: rgba(0, 0, 0, 0.4);
-    -fx-background-radius: 8px 8px 0 0;
-}
+    .game-button {
+        -fx-padding: 5 10;
+        -fx-font-size: 12px;
+    }
 
-.hand-scroll {
-    -fx-background-color: rgba(0, 0, 0, 0.2);
-    -fx-background: transparent;
-    -fx-background-radius: 0 0 8px 8px;
-}
-
-.yourHandScrollPane {
-    -fx-background: transparent;
-}
-
-.hand-scroll > .viewport {
-    -fx-background-color: transparent;
-}
-
-.player-hand {
-    -fx-padding: 15px 5px;
-    -fx-min-height: 160px;
-}
-
-/* Footer */
-.footer {
-    -fx-background-color: #1a1a1a;
-    -fx-padding: 5px;
+    .uno-button {
+        -fx-padding: 5 12;
+        -fx-font-size: 14px;
+    }
 }
