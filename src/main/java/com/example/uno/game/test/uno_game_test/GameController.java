@@ -6,10 +6,9 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -22,20 +21,19 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class GameController implements Initializable {
-    // New FXML components
+    // FXML components from GameUI.fxml
+    @FXML private Label gameRoundLabel;
+    @FXML private Label directionLabel;
+    @FXML private Label currentPlayerLabel;
     @FXML private HBox topOpponentsRow;
     @FXML private VBox leftOpponentsColumn;
     @FXML private VBox rightOpponentsColumn;
@@ -43,95 +41,127 @@ public class GameController implements Initializable {
     @FXML private FlowPane playerHand;
     @FXML private ImageView discardPileView;
     @FXML private ImageView drawPileView;
-    @FXML private Button drawButton;
     @FXML private Rectangle colorIndicator;
     @FXML private Label currentColorLabel;
     @FXML private Label statusLabel;
-    @FXML private Button endTurnButton;
-    @FXML private StackPane notificationArea;
-    @FXML private Label gameDirectionLabel;
-    @FXML private Label lastActionLabel;
+    @FXML private Button callUnoButton;
+    @FXML private Button challengeButton;
+    @FXML private HBox colorSelectionPane;
+    @FXML private Rectangle playAreaBackground;
+    @FXML private Button drawButton; // Added missing FXML button
 
-    // Existing game state variables
+    // Game state variables
     private boolean hasDrawnCard = false;
     private Game game;
     private final ScheduledExecutorService computerPlayerTimer = Executors.newSingleThreadScheduledExecutor();
-    private boolean isFirstTurn = true;
+    private int currentRound = 1;
+    private boolean isUnoCallNeeded = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Start a new game with 8 players (1 human + 7 computer)
-        game = new Game(8);
 
-        // Set up the notification area if it doesn't exist in FXML
-        if (notificationArea == null) {
-            notificationArea = new StackPane();
-            notificationArea.setPrefHeight(50);
-            VBox gamePane = new VBox();
-            gamePane.getChildren().add(1, notificationArea); // Add after status label
-        }
+        javafx.application.Platform.runLater(() -> {
+            Scene scene = drawButton.getScene(); // Using any control to get the scene
+            if (scene != null) {
+                ScreenSizeHandler.setupScreenSizeListener(scene);
+            }
+        });
 
-        // Set up the game direction label if it doesn't exist in FXML
-        if (gameDirectionLabel == null) {
-            gameDirectionLabel = new Label("Direction: Clockwise →");
-            gameDirectionLabel.setStyle("-fx-font-weight: bold;");
-        }
+        // Configure player hand scroll pane
+        playerHandScroll.setFitToWidth(true);
+        playerHandScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        playerHandScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
-        // Set up the last action label if it doesn't exist in FXML
-        if (lastActionLabel == null) {
-            lastActionLabel = new Label("Game started!");
-            lastActionLabel.setStyle("-fx-font-style: italic;");
-        }
-
-        // Create end turn button if it doesn't exist in FXML
-        if (endTurnButton == null) {
-            endTurnButton = new Button("End Turn");
-            endTurnButton.getStyleClass().add("game-button");
-        }
-
-        // Configure player hand scroll pane if it's available
-        if (playerHandScroll != null) {
-            playerHandScroll.setFitToWidth(true);
-            playerHandScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-            playerHandScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        }
-
-        // Set up draw card button
+        // Set up draw card button - Fixed: Changed to drawButton
         drawButton.setOnAction(e -> handleDrawCard());
 
-        // Set up end turn button
-        endTurnButton.setOnAction(e -> handleEndTurn());
+        // Set up UNO button
+        callUnoButton.setOnAction(e -> handleCallUno());
 
-        // Update button states
-        updateButtonStates();
+        // Set up challenge button
+        challengeButton.setOnAction(e -> handleChallenge());
 
-        // Set up the UI
+        // Set up the color selection buttons
+        setupColorSelectionButtons();
+
+        // Start a default game if not started by MenuController
+        startGame(7); // Default to 8 players (1 human + 7 computer)
+    }
+
+    /**
+     * Start a new game with the specified number of players
+     * This method is called from the MenuController
+     * @param numPlayers Number of computer players (total players will be numPlayers + 1)
+     */
+    public void startGame(int numPlayers) {
+        // Create a new game with the specified number of players (plus human player)
+        game = new Game(numPlayers + 1);
+
+        // Reset game state
+        isUnoCallNeeded = false;
+        hasDrawnCard = false;
+        currentRound = 1;
+
+        // Update UI elements
+        gameRoundLabel.setText("Round " + currentRound);
         updateUI();
+
+        // Fixed: Removed reassignment of drawPileView that was causing a bug
+        try {
+            Image cardBackImage = new Image(getClass().getResourceAsStream("/com/example/uno/game/test/uno_game_test/images/card_back.png"));
+            drawPileView.setImage(cardBackImage);
+        } catch (Exception e) {
+            // Handle case where image can't be loaded
+            System.err.println("Could not load card back image: " + e.getMessage());
+        }
 
         // Start computer player turns if needed
         checkAndStartComputerTurn();
     }
 
-    public void startGame(int numPlayers) {
-        game = new Game(numPlayers + 1);
-        isFirstTurn = true;
+    /**
+     * Set up the color selection panel buttons
+     */
+    private void setupColorSelectionButtons() {
+        // Find all buttons in the colorSelectionPane and set up actions
+        colorSelectionPane.getChildren().forEach(node -> {
+            if (node instanceof Button button) {
+                button.setOnAction(e -> {
+                    // Get selected color from the button text
+                    Card.Color selectedColor = Card.Color.valueOf(button.getText());
+                    game.setCurrentColor(selectedColor);
+
+                    // Hide color selection pane
+                    colorSelectionPane.setVisible(false);
+                    colorSelectionPane.setManaged(false);
+
+                    // Continue the turn processing
+                    completeWildCardPlay();
+                });
+            }
+        });
+    }
+
+    /**
+     * Continue processing after a wild card color has been selected
+     */
+    private void completeWildCardPlay() {
+        // Update UI to reflect the new color
+        updateColorIndicator();
+
+        // Check for UNO or win conditions
+        checkGameStatus();
+
+        // Reset drawn card flag for next turn
         hasDrawnCard = false;
-        updateUI();
-        updateButtonStates();
-        updateGameDirectionLabel(true); // Default direction is clockwise
+
+        // Start computer turns if needed
+        checkAndStartComputerTurn();
     }
 
-    // Update button states based on game state
-    private void updateButtonStates() {
-        boolean isPlayerTurn = game.getCurrentPlayer() == game.getPlayers().getFirst();
-
-        // Draw button is always enabled during player's turn
-        drawButton.setDisable(!isPlayerTurn);
-
-        // End Turn button is only enabled if player has drawn at least one card
-        endTurnButton.setDisable(!isPlayerTurn || !hasDrawnCard);
-    }
-
+    /**
+     * Update all UI elements based on the current game state
+     */
     private void updateUI() {
         // Update player hand
         updatePlayerHand();
@@ -145,14 +175,16 @@ public class GameController implements Initializable {
         // Update current color indicator
         updateColorIndicator();
 
-        // Update status labels
-        Player currentPlayer = game.getCurrentPlayer();
-        statusLabel.setText("Current turn: " + currentPlayer.getName());
+        // Update status and direction labels
+        updateStatusLabels();
 
         // Update button states
         updateButtonStates();
     }
 
+    /**
+     * Update the player's hand display
+     */
     private void updatePlayerHand() {
         playerHand.getChildren().clear();
         Player humanPlayer = game.getPlayers().get(0);
@@ -205,11 +237,14 @@ public class GameController implements Initializable {
         }
     }
 
+    /**
+     * Update the opponent displays
+     */
     private void updateOpponentViews() {
         // Clear existing opponent views
-        if (topOpponentsRow != null) topOpponentsRow.getChildren().clear();
-        if (leftOpponentsColumn != null) leftOpponentsColumn.getChildren().clear();
-        if (rightOpponentsColumn != null) rightOpponentsColumn.getChildren().clear();
+        topOpponentsRow.getChildren().clear();
+        leftOpponentsColumn.getChildren().clear();
+        rightOpponentsColumn.getChildren().clear();
 
         // Create opponent views (up to 7 opponents)
         for (int i = 1; i < game.getPlayers().size(); i++) {
@@ -231,59 +266,121 @@ public class GameController implements Initializable {
             }
 
             // Create visual representation of cards
-            HBox cardsView = new HBox(-5); // Negative spacing for overlapping cards
+            HBox cardsView = new HBox(-15); // Increased overlap for card backs
             cardsView.setAlignment(Pos.CENTER);
 
             // Show up to 7 cards visually
             int cardCount = opponent.getHand().size();
             int visibleCards = Math.min(cardCount, 7);
 
+            // Load the card back image once
+            Image cardBackImage = null;
+            try {
+                // Fixed: Corrected the resource path
+                cardBackImage = new Image(getClass().getResourceAsStream("/com/example/uno/game/test/uno_game_test/images/card_back.png"));
+            } catch (Exception e) {
+                // If image loading fails, we'll create a fallback rectangle
+            }
+
             for (int j = 0; j < visibleCards; j++) {
-                Rectangle cardBack = new Rectangle(30, 45);
-                cardBack.setFill(Color.DARKBLUE);
-                cardBack.setStroke(Color.WHITE);
-                cardBack.setStrokeWidth(1);
-                cardBack.setArcHeight(5);
-                cardBack.setArcWidth(5);
-                cardsView.getChildren().add(cardBack);
+                if (cardBackImage != null) {
+                    // Use the card back image
+                    ImageView cardBackView = new ImageView(cardBackImage);
+                    cardBackView.setFitHeight(45);
+                    cardBackView.setFitWidth(30);
+                    cardBackView.setPreserveRatio(true);
+                    cardsView.getChildren().add(cardBackView);
+                } else {
+                    // Fallback to the colored rectangle if image loading failed
+                    Rectangle cardBack = new Rectangle(30, 45);
+                    cardBack.setFill(Color.DARKBLUE);
+                    cardBack.setStroke(Color.WHITE);
+                    cardBack.setStrokeWidth(1);
+                    cardBack.setArcHeight(5);
+                    cardBack.setArcWidth(5);
+                    cardsView.getChildren().add(cardBack);
+                }
             }
 
             // Add card count label
             Label cardCountLabel = new Label(cardCount + " cards");
 
+            // Indicate UNO status if applicable
+            if (cardCount == 1) {
+                cardCountLabel.setText("UNO!");
+                cardCountLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            }
+
             // Add everything to the opponent box
             opponentBox.getChildren().addAll(nameLabel, cardsView, cardCountLabel);
 
             // Position opponent based on index
-            if (i <= 3 && topOpponentsRow != null) {
+            if (i <= 3) {
                 // First 3 opponents go in top row
                 topOpponentsRow.getChildren().add(opponentBox);
-            } else if (i <= 5 && leftOpponentsColumn != null) {
+            } else if (i <= 5) {
                 // Next 2 opponents go in left column
                 leftOpponentsColumn.getChildren().add(opponentBox);
-            } else if (rightOpponentsColumn != null) {
+            } else {
                 // Last 2 opponents go in right column
                 rightOpponentsColumn.getChildren().add(opponentBox);
             }
         }
     }
 
+    /**
+     * Update the discard pile display
+     */
     private void updateDiscardPile() {
         Card topCard = game.getTopCard();
         try {
             discardPileView.setImage(new Image(getClass().getResourceAsStream(topCard.getImagePath())));
         } catch (Exception e) {
-            // Handle case where images aren't available
-            // This just keeps the existing image or does nothing
+            // Create a rectangle to represent the card if image loading fails
+            Rectangle cardRect = new Rectangle(discardPileView.getFitWidth(), discardPileView.getFitHeight());
+            cardRect.setFill(getJavaFXColor(topCard.getColor()));
+            cardRect.setStroke(Color.BLACK);
+            cardRect.setArcHeight(10);
+            cardRect.setArcWidth(10);
+
+            // We can't directly set a Rectangle to an ImageView
+            // In a real implementation, you would create a snapshot of the rectangle
+            // Here we'll just leave the existing image
         }
     }
 
+    /**
+     * Update the color indicator display
+     */
     private void updateColorIndicator() {
         Card.Color currentColor = game.getCurrentColor();
         colorIndicator.setFill(getJavaFXColor(currentColor));
-        currentColorLabel.setText("Current Color: " + currentColor);
+        currentColorLabel.setText(currentColor.toString());
     }
 
+    /**
+     * Update status and direction labels
+     */
+    private void updateStatusLabels() {
+        Player currentPlayer = game.getCurrentPlayer();
+
+        // Update current player label
+        currentPlayerLabel.setText("Current Player: " + currentPlayer.getName());
+
+        // Update status message
+        if (currentPlayer == game.getPlayers().get(0)) {
+            statusLabel.setText("Your turn!");
+        } else {
+            statusLabel.setText(currentPlayer.getName() + "'s turn");
+        }
+
+        // Update direction label
+        directionLabel.setText(game.isClockwise() ? "↻ Clockwise" : "↺ Counter-Clockwise");
+    }
+
+    /**
+     * Convert a card color to JavaFX Color
+     */
     private Color getJavaFXColor(Card.Color cardColor) {
         return switch (cardColor) {
             case RED -> Color.RED;
@@ -295,98 +392,140 @@ public class GameController implements Initializable {
         };
     }
 
+    /**
+     * Update button states based on game state
+     */
+    private void updateButtonStates() {
+        boolean isPlayerTurn = game.getCurrentPlayer() == game.getPlayers().get(0);
+
+        // Draw button is always enabled during player's turn
+        drawButton.setDisable(!isPlayerTurn);
+
+        // Call UNO button state
+        Player humanPlayer = game.getPlayers().get(0);
+        callUnoButton.setDisable(!isPlayerTurn || humanPlayer.getHand().size() != 2);
+
+        // Challenge button state - enabled if any opponent has one card
+        boolean canChallenge = false;
+        for (int i = 1; i < game.getPlayers().size(); i++) {
+            if (game.getPlayers().get(i).getHand().size() == 1) {
+                canChallenge = true;
+                break;
+            }
+        }
+        challengeButton.setDisable(!canChallenge);
+    }
+
+    /**
+     * Handle a click on a card in the player's hand
+     */
     private void handleCardClick(int cardIndex) {
-        if (game.getCurrentPlayer() != game.getPlayers().getFirst()) {
+        if (game.getCurrentPlayer() != game.getPlayers().get(0)) {
             // Not player's turn
             return;
         }
 
-        Card card = game.getPlayers().getFirst().getHand().get(cardIndex);
+        Card card = game.getPlayers().get(0).getHand().get(cardIndex);
+
+        // Check if this is the player's last or second-to-last card
+        Player humanPlayer = game.getPlayers().get(0);
+        boolean isUnoSituation = humanPlayer.getHand().size() == 2;
 
         if (card.getColor() == Card.Color.WILD) {
-            // For wild cards, prompt for color selection
-            showColorSelectionDialog();
+            // For wild cards, show the color selection pane
             if (game.playCard(cardIndex)) {
-                // Update last action based on card type
-                updateLastAction(card);
+                // Show color selection pane
+                colorSelectionPane.setVisible(true);
+                colorSelectionPane.setManaged(true);
+
+                // Check UNO situation
+                if (isUnoSituation) {
+                    isUnoCallNeeded = true;
+                }
+
+                // Show notification based on card type
+                if (card.getType() == Card.Type.DRAW_FOUR) {
+                    showNotification("+4 CARDS", Color.RED);
+                }
+
+                // updateUI will be called after color selection
                 updateUI();
-
-                // Check for UNO or win
-                checkGameStatus();
-
-                // Reset drawn card flag for next turn
-                hasDrawnCard = false;
-
-                // Start computer turns if needed
-                checkAndStartComputerTurn();
+            } else {
+                // Invalid move
+                showInvalidMoveAlert();
             }
         } else {
             if (game.playCard(cardIndex)) {
-                // Update last action based on card type
-                updateLastAction(card);
+                // Show notification based on card type
+                showCardActionNotification(card);
+
+                // Check UNO situation
+                if (isUnoSituation) {
+                    isUnoCallNeeded = true;
+                }
+
+                // Update UI and advance the game
                 updateUI();
-
-                // Check for UNO or win
                 checkGameStatus();
-
-                // Reset drawn card flag for next turn
                 hasDrawnCard = false;
-
-                // Start computer turns if needed
                 checkAndStartComputerTurn();
             } else {
                 // Invalid move
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Invalid Move");
-                alert.setHeaderText("You can't play this card");
-                alert.setContentText("The card must match the color or number of the top discard card.");
-                alert.showAndWait();
+                showInvalidMoveAlert();
             }
         }
     }
 
-    // Update the last action label based on the card played
-    private void updateLastAction(Card card) {
-        String actionText = "Played ";
-
-        // Add card information
-        if (card.getType() == Card.Type.NUMBER) {
-            actionText += card.getColor() + " " + card.getNumber();
-        } else {
-            actionText += card.getColor() + " " + card.getType();
+    /**
+     * Show a notification based on the card action
+     */
+    private void showCardActionNotification(Card card) {
+        switch (card.getType()) {
+            case SKIP:
+                showNotification("SKIP!", Color.RED);
+                break;
+            case REVERSE:
+                showNotification("REVERSE!", Color.ORANGE);
+                break;
+            case DRAW_TWO:
+                showNotification("+2 CARDS", Color.RED);
+                break;
+            default:
+                // No notification for regular cards
+                break;
         }
-
-        // Handle special cards
-        if (card.getType() == Card.Type.SKIP) {
-            actionText += " - Player skipped!";
-            showNotification("SKIP!", Color.RED);
-        } else if (card.getType() == Card.Type.REVERSE) {
-            actionText += " - Direction reversed!";
-            showNotification("REVERSE!", Color.ORANGE);
-            updateGameDirectionLabel(false); // Toggle direction (using your existing method)
-        } else if (card.getType() == Card.Type.DRAW_TWO) {
-            actionText += " - Next player draws 2 cards!";
-            showNotification("+2 CARDS", Color.RED);
-        } else if (card.getType() == Card.Type.DRAW_FOUR) {
-            actionText += " - Next player draws 4 cards!";
-            showNotification("+4 CARDS", Color.DARKRED);
-        }
-
-        lastActionLabel.setText(actionText);
     }
 
-    // Show a temporary notification for important game events
-    private void showNotification(String message, Color color) {
-        if (notificationArea == null) return;
+    /**
+     * Show invalid move alert
+     */
+    private void showInvalidMoveAlert() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Invalid Move");
+        alert.setHeaderText("You can't play this card");
+        alert.setContentText("The card must match the color or number of the top discard card.");
+        alert.showAndWait();
+    }
 
-        Text notification = new Text(message);
-        notification.setFont(Font.font("System", FontWeight.BOLD, 24));
+    /**
+     * Show a temporary notification for important game events
+     */
+    private void showNotification(String message, Color color) {
+        // Create notification text
+        Font notificationFont = Font.font("System", FontWeight.BOLD, 24);
+        javafx.scene.text.Text notification = new javafx.scene.text.Text(message);
+        notification.setFont(notificationFont);
         notification.setFill(color);
         notification.setStroke(Color.WHITE);
         notification.setStrokeWidth(0.5);
 
-        notificationArea.getChildren().clear();
-        notificationArea.getChildren().add(notification);
+        // Create a stack pane to hold the notification in center of play area
+        StackPane notificationPane = new StackPane(notification);
+        notificationPane.setAlignment(Pos.CENTER);
+
+        // Add the notification to the play area background
+        StackPane centerArea = (StackPane) playAreaBackground.getParent();
+        centerArea.getChildren().add(notificationPane);
 
         // Fade out effect
         FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5), notification);
@@ -396,169 +535,213 @@ public class GameController implements Initializable {
         fadeOut.play();
 
         // Remove after fading
-        fadeOut.setOnFinished(e -> notificationArea.getChildren().clear());
+        fadeOut.setOnFinished(e -> centerArea.getChildren().remove(notificationPane));
     }
 
-    // Update the game direction indicator (using your existing method)
-    private void updateGameDirectionLabel(boolean isClockwise) {
-        if (isFirstTurn) {
-            // On first turn, just set without toggling
-            gameDirectionLabel.setText("Direction: Clockwise →");
-            isFirstTurn = false;
-            return;
-        }
-
-        // Get current direction from label text
-        boolean currentIsClockwise = gameDirectionLabel.getText().contains("Clockwise");
-
-        if (isClockwise) {
-            // Set to specific value
-            gameDirectionLabel.setText("Direction: Clockwise →");
-        } else {
-            // Set to specific value
-            gameDirectionLabel.setText("Direction: Counter-clockwise ←");
-        }
-    }
-
-    private void showColorSelectionDialog() {
-        Dialog<Card.Color> dialog = new Dialog<>();
-        dialog.setTitle("Choose a Color");
-        dialog.setHeaderText("Select a color for the Wild card.");
-
-        // Create color buttons with improved styling
-        Button redButton = new Button("Red");
-        redButton.setStyle("-fx-background-color: #ff6666; -fx-text-fill: white;");
-        redButton.setOnAction(event -> {
-            game.setCurrentColor(Card.Color.RED);
-            dialog.setResult(Card.Color.RED);
-            dialog.close();
-        });
-
-        Button blueButton = new Button("Blue");
-        blueButton.setStyle("-fx-background-color: #6666ff; -fx-text-fill: white;");
-        blueButton.setOnAction(event -> {
-            game.setCurrentColor(Card.Color.BLUE);
-            dialog.setResult(Card.Color.BLUE);
-            dialog.close();
-        });
-
-        Button greenButton = new Button("Green");
-        greenButton.setStyle("-fx-background-color: #66ff66; -fx-text-fill: white;");
-        greenButton.setOnAction(event -> {
-            game.setCurrentColor(Card.Color.GREEN);
-            dialog.setResult(Card.Color.GREEN);
-            dialog.close();
-        });
-
-        Button yellowButton = new Button("Yellow");
-        yellowButton.setStyle("-fx-background-color: #ffff66; -fx-text-fill: black;");
-        yellowButton.setOnAction(event -> {
-            game.setCurrentColor(Card.Color.YELLOW);
-            dialog.setResult(Card.Color.YELLOW);
-            dialog.close();
-        });
-
-        HBox buttonBox = new HBox(10, redButton, blueButton, greenButton, yellowButton);
-        buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.setPrefHeight(60);
-
-        dialog.getDialogPane().setContent(buttonBox);
-        dialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
-
-        Optional<Card.Color> result = dialog.showAndWait();
-        result.ifPresent(color -> game.setCurrentColor(color));
-    }
-
-    // Using your existing handleDrawCard method
+    /**
+     * Handle the draw card button click
+     */
     private void handleDrawCard() {
-        if (game.getCurrentPlayer() != game.getPlayers().getFirst()) {
+        if (game.getCurrentPlayer() != game.getPlayers().get(0)) {
             // Not player's turn
             return;
         }
 
-        // Use the new drawCard method which doesn't advance the turn
-        game.drawCard();
+        // Draw a card
+        Card drawnCard = game.drawCard();
 
-        // Update last action text
-        int drawnCards = hasDrawnCard ? getCardsDrawnCount() + 1 : 1;
-        lastActionLabel.setText("You drew " + drawnCards + (drawnCards == 1 ? " card" : " cards"));
+        // Show the drawn card
+        showDrawnCardNotification(drawnCard);
 
-        // Mark that player has drawn at least one card
+        // Mark that player has drawn a card
         hasDrawnCard = true;
 
-        // Update UI to show the new card and button states
-        updateUI();
-    }
-
-    // Helper method to get how many cards have been drawn this turn (unchanged)
-    private int getCardsDrawnCount() {
-        // This is an estimate of cards drawn this turn based on the text
-        String actionText = lastActionLabel.getText();
-        if (actionText.startsWith("You drew ")) {
-            try {
-                String[] parts = actionText.split(" ");
-                if (parts.length >= 3) {
-                    return Integer.parseInt(parts[2]);
-                }
-            } catch (NumberFormatException e) {
-                // If we can't parse the number, just return 1
+        // Check if the drawn card can be played
+        if (drawnCard.canPlayOn(game.getTopCard()) || drawnCard.getColor() == Card.Color.WILD ||
+                drawnCard.getColor() == game.getCurrentColor()) { // Fixed: Added WILD card check
+            // Ask if the player wants to play the drawn card
+            boolean playDrawnCard = showPlayDrawnCardPrompt(drawnCard);
+            if (playDrawnCard) {
+                // Player chooses to play the card
+                int lastCardIndex = game.getPlayers().get(0).getHand().size() - 1;
+                handleCardClick(lastCardIndex);
+                return;
             }
         }
-        return 1;
-    }
 
-    // Handle end turn button click (unchanged)
-    private void handleEndTurn() {
-        if (game.getCurrentPlayer() != game.getPlayers().getFirst() || !hasDrawnCard) {
-            // Not player's turn or player hasn't drawn a card yet
-            return;
-        }
-
-        // Advance to the next player's turn
+        // End turn automatically after drawing
         game.nextPlayer();
-        hasDrawnCard = false;  // Reset the flag for next turn
         updateUI();
-
-        // Show notification that turn has ended
-        showNotification("Turn Ended", Color.GRAY);
-
-        // Start computer turns if needed
         checkAndStartComputerTurn();
     }
 
+    /**
+     * Show notification for the drawn card
+     */
+    private void showDrawnCardNotification(Card drawnCard) {
+        try {
+            // Create an ImageView for the card
+            ImageView cardView = new ImageView(new Image(getClass().getResourceAsStream(drawnCard.getImagePath())));
+            cardView.setFitHeight(150);
+            cardView.setFitWidth(100);
+            cardView.setPreserveRatio(true);
+
+            // Create notification container
+            VBox container = new VBox(10);
+            container.setAlignment(Pos.CENTER);
+            container.getChildren().addAll(
+                    new Label("Card Drawn:"),
+                    cardView
+            );
+
+            // Create stack pane centered in play area
+            StackPane notificationPane = new StackPane(container);
+            notificationPane.setAlignment(Pos.CENTER);
+
+            // Show in center area
+            StackPane centerArea = (StackPane) playAreaBackground.getParent();
+            centerArea.getChildren().add(notificationPane);
+
+            // Fade out after a delay
+            FadeTransition fadeOut = new FadeTransition(Duration.seconds(0.5), container);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+            fadeOut.setDelay(Duration.seconds(2));
+            fadeOut.play();
+
+            // Remove after fading
+            fadeOut.setOnFinished(e -> centerArea.getChildren().remove(notificationPane));
+        } catch (Exception e) {
+            // If images fail to load, just use a text notification
+            showNotification("Drew " + drawnCard.toString(), Color.BLACK);
+        }
+    }
+
+    /**
+     * Prompt user if they want to play the drawn card
+     */
+    private boolean showPlayDrawnCardPrompt(Card drawnCard) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Play Drawn Card");
+        alert.setHeaderText("You drew a playable card");
+        alert.setContentText("Do you want to play the " + drawnCard.toString() + "?");
+
+        return alert.showAndWait().orElse(null) == javafx.scene.control.ButtonType.OK;
+    }
+
+    /**
+     * Handle the Call UNO button click
+     */
+    private void handleCallUno() {
+        // If the player needs to call UNO, mark it as done
+        isUnoCallNeeded = false;
+        showNotification("UNO!", Color.PURPLE);
+    }
+
+    /**
+     * Handle the Challenge button click
+     */
+    private void handleChallenge() {
+        // Find players with one card who haven't called UNO
+        boolean challengeSuccessful = false;
+
+        // In a real implementation, you would track which players have called UNO
+        // For now, we'll simulate a 50% chance of successful challenge
+        if (Math.random() < 0.5) {
+            // Challenge successful
+            challengeSuccessful = true;
+
+            // Find the first opponent with one card
+            for (int i = 1; i < game.getPlayers().size(); i++) {
+                Player opponent = game.getPlayers().get(i);
+                if (opponent.getHand().size() == 1) {
+                    // Penalize with two cards
+                    opponent.addCard(game.drawCard());
+                    opponent.addCard(game.drawCard());
+
+                    showNotification("Challenge Successful!", Color.GREEN);
+                    break;
+                }
+            }
+        } else {
+            // Challenge failed
+            // Penalize the challenger
+            game.getPlayers().get(0).addCard(game.drawCard());
+            game.getPlayers().get(0).addCard(game.drawCard());
+
+            showNotification("Challenge Failed!", Color.RED);
+        }
+
+        updateUI();
+    }
+
+    /**
+     * Check game status for UNO or win conditions
+     */
     private void checkGameStatus() {
         for (Player player : game.getPlayers()) {
             if (player.hasWon()) {
                 // Game over
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Game Over");
-                alert.setHeaderText(player.getName() + " wins!");
-                alert.setContentText("Game finished.");
-                alert.showAndWait();
-
-                // Start a new game
-                game = new Game(game.getPlayers().size()); // Keep same player count
-                isFirstTurn = true;
-                hasDrawnCard = false;
-                updateUI();
-                updateGameDirectionLabel(true);
+                showGameOverAlert(player);
                 return;
-            } else if (player.hasUno()) {
+            } else if (player.getHand().size() == 1) {
                 // Player has UNO
-                String message = player.getName() + " has UNO!";
-                statusLabel.setText(message);
-                showNotification("UNO!", Color.PURPLE);
+                if (player == game.getPlayers().get(0) && isUnoCallNeeded) {
+                    // Human player didn't call UNO - penalize (only if they didn't press the UNO button)
+                    if (Math.random() < 0.3) { // 30% chance a computer player will "catch" them
+                        player.addCard(game.drawCard());
+                        player.addCard(game.drawCard());
+                        showNotification("Failed to call UNO!", Color.RED);
+                    }
+                    isUnoCallNeeded = false;
+                } else if (player != game.getPlayers().get(0)) {
+                    // Computer player - randomly decides whether to "forget" to call UNO
+                    if (Math.random() < 0.7) { // 70% chance they call UNO correctly
+                        showNotification(player.getName() + " calls UNO!", Color.PURPLE);
+                    }
+                }
             }
         }
     }
 
+    /**
+     * Show game over alert
+     */
+    private void showGameOverAlert(Player winner) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Game Over");
+        alert.setHeaderText(winner.getName() + " wins!");
+        alert.setContentText("Round " + currentRound + " finished.");
+        alert.showAndWait();
+
+        // Start a new game or round
+        startNewRound();
+    }
+
+    /**
+     * Start a new round
+     */
+    private void startNewRound() {
+        currentRound++;
+        gameRoundLabel.setText("Round " + currentRound);
+
+        // Start a new game with the same number of players
+        game = new Game(game.getPlayers().size());
+        isUnoCallNeeded = false;
+        hasDrawnCard = false;
+        updateUI();
+    }
+
+    /**
+     * Check and start computer player turns
+     */
     private void checkAndStartComputerTurn() {
         Player currentPlayer = game.getCurrentPlayer();
 
-        if (currentPlayer.isComputer()) {
+        if (currentPlayer != null && currentPlayer.isComputer()) { // Fixed: Added null check
             // Update status immediately to show whose turn it is
             Platform.runLater(() -> {
-                statusLabel.setText("Current turn: " + currentPlayer.getName() + " (thinking...)");
+                statusLabel.setText(currentPlayer.getName() + " is thinking...");
                 updateUI(); // Update the UI to highlight the current player
             });
 
@@ -571,9 +754,12 @@ public class GameController implements Initializable {
         }
     }
 
+    /**
+     * Execute a computer player's turn
+     */
     private void playComputerTurn() {
         Player computer = game.getCurrentPlayer();
-        if (!computer.isComputer()) {
+        if (computer == null || !computer.isComputer()) { // Fixed: Added null check
             return;
         }
 
@@ -587,38 +773,21 @@ public class GameController implements Initializable {
                 game.setCurrentColor(colors[(int) (Math.random() * colors.length)]);
             }
 
-            // Update last action based on the computer's played card
-            String computerAction = computer.getName() + " played ";
-            if (selectedCard.getType() == Card.Type.NUMBER) {
-                computerAction += selectedCard.getColor() + " " + selectedCard.getNumber();
-            } else {
-                computerAction += selectedCard.getColor() + " " + selectedCard.getType();
-            }
+            // Show notification for special cards
+            showCardActionNotification(selectedCard);
 
-            // Handle special cards for computer play
-            if (selectedCard.getType() == Card.Type.SKIP) {
-                computerAction += " - Player skipped!";
-                showNotification("SKIP!", Color.RED);
-            } else if (selectedCard.getType() == Card.Type.REVERSE) {
-                computerAction += " - Direction reversed!";
-                showNotification("REVERSE!", Color.ORANGE);
-                updateGameDirectionLabel(false); // Toggle direction
-            } else if (selectedCard.getType() == Card.Type.DRAW_TWO) {
-                computerAction += " - Next player draws 2 cards!";
-                showNotification("+2 CARDS", Color.RED);
-            } else if (selectedCard.getType() == Card.Type.DRAW_FOUR) {
-                computerAction += " - Next player draws 4 cards!";
-                showNotification("+4 CARDS", Color.DARKRED);
-            }
-
-            lastActionLabel.setText(computerAction);
+            // Play the card
             game.playCard(cardToPlay);
 
+            // Check for UNO
+            if (computer.getHand().size() == 1) {
+                if (Math.random() < 0.7) { // 70% chance computer remembers to call UNO
+                    showNotification(computer.getName() + " calls UNO!", Color.PURPLE);
+                }
+            }
         } else {
             // No valid move, draw a card
-            // Still using drawCardForPlayer for computer players (draws and ends turn)
             game.drawCardForPlayer();
-            lastActionLabel.setText(computer.getName() + " drew a card");
         }
 
         updateUI();
@@ -628,6 +797,9 @@ public class GameController implements Initializable {
         checkAndStartComputerTurn();
     }
 
+    /**
+     * Clean up resources when the game is closed
+     */
     public void shutdown() {
         computerPlayerTimer.shutdown();
     }
