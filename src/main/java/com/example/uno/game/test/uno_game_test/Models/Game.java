@@ -9,6 +9,7 @@ public class Game {
     private int currentPlayerIndex;
     private boolean isClockwise;
     private Card.Color currentColor;
+    private boolean clockwise = true;
 
     public Game(int numPlayers) {
         deck = new Deck();
@@ -42,6 +43,10 @@ public class Game {
 
         deck.discard(firstCard);
         currentColor = firstCard.getColor();
+    }
+
+    public boolean isClockwise() {
+        return clockwise;
     }
 
     public Player getCurrentPlayer() {

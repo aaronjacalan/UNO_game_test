@@ -11,8 +11,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -24,6 +26,8 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
@@ -31,23 +35,28 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class GameController implements Initializable {
-    @FXML private VBox gamePane;
-    @FXML private HBox playerHand;
-    @FXML private VBox opponentArea;
+    // New FXML components
+    @FXML private HBox topOpponentsRow;
+    @FXML private VBox leftOpponentsColumn;
+    @FXML private VBox rightOpponentsColumn;
+    @FXML private ScrollPane playerHandScroll;
+    @FXML private FlowPane playerHand;
     @FXML private ImageView discardPileView;
+    @FXML private ImageView drawPileView;
     @FXML private Button drawButton;
-    @FXML private Button endTurnButton;  // New: Button to end turn after drawing
-    @FXML private Label statusLabel;
-    @FXML private Label currentColorLabel;
     @FXML private Rectangle colorIndicator;
-    @FXML private StackPane notificationArea; // Area for displaying notifications like skip and reverse
-    @FXML private Label gameDirectionLabel; // Shows current game direction
-    @FXML private Label lastActionLabel; // Shows the last card played and its effect
+    @FXML private Label currentColorLabel;
+    @FXML private Label statusLabel;
+    @FXML private Button endTurnButton;
+    @FXML private StackPane notificationArea;
+    @FXML private Label gameDirectionLabel;
+    @FXML private Label lastActionLabel;
 
-    private boolean hasDrawnCard = false;  // Track if player has drawn at least one card
+    // Existing game state variables
+    private boolean hasDrawnCard = false;
     private Game game;
     private final ScheduledExecutorService computerPlayerTimer = Executors.newSingleThreadScheduledExecutor();
-    private boolean isFirstTurn = true; // Track if this is the first turn
+    private boolean isFirstTurn = true;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -58,6 +67,7 @@ public class GameController implements Initializable {
         if (notificationArea == null) {
             notificationArea = new StackPane();
             notificationArea.setPrefHeight(50);
+            VBox gamePane = new VBox();
             gamePane.getChildren().add(1, notificationArea); // Add after status label
         }
 
@@ -65,37 +75,28 @@ public class GameController implements Initializable {
         if (gameDirectionLabel == null) {
             gameDirectionLabel = new Label("Direction: Clockwise →");
             gameDirectionLabel.setStyle("-fx-font-weight: bold;");
-            HBox directionBox = new HBox(gameDirectionLabel);
-            directionBox.setAlignment(Pos.CENTER);
-            gamePane.getChildren().add(directionBox);
         }
 
         // Set up the last action label if it doesn't exist in FXML
         if (lastActionLabel == null) {
             lastActionLabel = new Label("Game started!");
             lastActionLabel.setStyle("-fx-font-style: italic;");
-            HBox lastActionBox = new HBox(lastActionLabel);
-            lastActionBox.setAlignment(Pos.CENTER);
-            gamePane.getChildren().add(lastActionBox);
         }
 
         // Create end turn button if it doesn't exist in FXML
         if (endTurnButton == null) {
             endTurnButton = new Button("End Turn");
-            HBox buttonBox = new HBox(10, drawButton, endTurnButton);
-            buttonBox.setAlignment(Pos.CENTER);
-            gamePane.getChildren().add(buttonBox);
-
-            // Remove original draw button if it's in a separate location
-            if (drawButton.getParent() != buttonBox) {
-                gamePane.getChildren().remove(drawButton);
-            }
+            endTurnButton.getStyleClass().add("game-button");
         }
 
-        // Set up the UI
-        updateUI();
+        // Configure player hand scroll pane if it's available
+        if (playerHandScroll != null) {
+            playerHandScroll.setFitToWidth(true);
+            playerHandScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            playerHandScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        }
 
-        // Set up draw card button - now uses the new drawCard method
+        // Set up draw card button
         drawButton.setOnAction(e -> handleDrawCard());
 
         // Set up end turn button
@@ -103,6 +104,9 @@ public class GameController implements Initializable {
 
         // Update button states
         updateButtonStates();
+
+        // Set up the UI
+        updateUI();
 
         // Start computer player turns if needed
         checkAndStartComputerTurn();
@@ -130,6 +134,26 @@ public class GameController implements Initializable {
 
     private void updateUI() {
         // Update player hand
+        updatePlayerHand();
+
+        // Update opponent views
+        updateOpponentViews();
+
+        // Update discard pile top card
+        updateDiscardPile();
+
+        // Update current color indicator
+        updateColorIndicator();
+
+        // Update status labels
+        Player currentPlayer = game.getCurrentPlayer();
+        statusLabel.setText("Current turn: " + currentPlayer.getName());
+
+        // Update button states
+        updateButtonStates();
+    }
+
+    private void updatePlayerHand() {
         playerHand.getChildren().clear();
         Player humanPlayer = game.getPlayers().get(0);
 
@@ -137,19 +161,26 @@ public class GameController implements Initializable {
             Card card = humanPlayer.getHand().get(i);
             final int cardIndex = i;
 
-            // Create card view
+            // Create card view with stack pane for hover effects
+            StackPane cardPane = new StackPane();
+            cardPane.getStyleClass().add("player-card");
+
             ImageView cardView = new ImageView();
             cardView.setFitHeight(120);
             cardView.setFitWidth(80);
+            cardView.setPreserveRatio(true);
 
             // Try to load the card image or use placeholder
             try {
                 cardView.setImage(new Image(getClass().getResourceAsStream(card.getImagePath())));
+                cardPane.getChildren().add(cardView);
             } catch (Exception exception) {
                 // If card images aren't available, create a simple colored rectangle
                 Rectangle cardRect = new Rectangle(80, 120);
                 cardRect.setFill(getJavaFXColor(card.getColor()));
                 cardRect.setStroke(Color.BLACK);
+                cardRect.setArcHeight(10);
+                cardRect.setArcWidth(10);
 
                 Label cardLabel = new Label();
                 if (card.getType() == Card.Type.NUMBER) {
@@ -157,58 +188,94 @@ public class GameController implements Initializable {
                 } else {
                     cardLabel.setText(card.getType().toString().substring(0, 1));
                 }
+                cardLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+                cardLabel.setTextFill(Color.WHITE);
 
-                VBox cardBox = new VBox(cardRect, cardLabel);
-                cardBox.setAlignment(Pos.CENTER);
-                playerHand.getChildren().add(cardBox);
-
-                // Add click event for playing this card
-                cardBox.setOnMouseClicked(e -> handleCardClick(cardIndex));
-                continue;
+                cardPane.getChildren().addAll(cardRect, cardLabel);
             }
 
             // Add click event for playing this card
-            cardView.setOnMouseClicked(e -> handleCardClick(cardIndex));
+            cardPane.setOnMouseClicked(e -> handleCardClick(cardIndex));
 
-            playerHand.getChildren().add(cardView);
+            // Add hover effect for better UX
+            cardPane.setOnMouseEntered(e -> cardPane.setTranslateY(-10));
+            cardPane.setOnMouseExited(e -> cardPane.setTranslateY(0));
+
+            playerHand.getChildren().add(cardPane);
         }
+    }
 
-        // Update opponent area showing number of cards
-        opponentArea.getChildren().clear();
+    private void updateOpponentViews() {
+        // Clear existing opponent views
+        if (topOpponentsRow != null) topOpponentsRow.getChildren().clear();
+        if (leftOpponentsColumn != null) leftOpponentsColumn.getChildren().clear();
+        if (rightOpponentsColumn != null) rightOpponentsColumn.getChildren().clear();
+
+        // Create opponent views (up to 7 opponents)
         for (int i = 1; i < game.getPlayers().size(); i++) {
             Player opponent = game.getPlayers().get(i);
-            HBox opponentBox = new HBox();
+
+            // Create the opponent container
+            VBox opponentBox = new VBox(5);
             opponentBox.setAlignment(Pos.CENTER);
-            opponentBox.setSpacing(10);
+            opponentBox.getStyleClass().add("opponent-container");
 
+            // Add name label
             Label nameLabel = new Label(opponent.getName());
-            Label cardCountLabel = new Label(opponent.getHand().size() + " cards");
+            nameLabel.getStyleClass().add("opponent-name");
 
+            // Highlight current player's turn
             if (game.getCurrentPlayer() == opponent) {
-                nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: blue;");
+                opponentBox.getStyleClass().add("active-player");
+                nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
             }
 
-            opponentBox.getChildren().addAll(nameLabel, cardCountLabel);
-            opponentArea.getChildren().add(opponentBox);
-        }
+            // Create visual representation of cards
+            HBox cardsView = new HBox(-5); // Negative spacing for overlapping cards
+            cardsView.setAlignment(Pos.CENTER);
 
-        // Update discard pile top card
+            // Show up to 7 cards visually
+            int cardCount = opponent.getHand().size();
+            int visibleCards = Math.min(cardCount, 7);
+
+            for (int j = 0; j < visibleCards; j++) {
+                Rectangle cardBack = new Rectangle(30, 45);
+                cardBack.setFill(Color.DARKBLUE);
+                cardBack.setStroke(Color.WHITE);
+                cardBack.setStrokeWidth(1);
+                cardBack.setArcHeight(5);
+                cardBack.setArcWidth(5);
+                cardsView.getChildren().add(cardBack);
+            }
+
+            // Add card count label
+            Label cardCountLabel = new Label(cardCount + " cards");
+
+            // Add everything to the opponent box
+            opponentBox.getChildren().addAll(nameLabel, cardsView, cardCountLabel);
+
+            // Position opponent based on index
+            if (i <= 3 && topOpponentsRow != null) {
+                // First 3 opponents go in top row
+                topOpponentsRow.getChildren().add(opponentBox);
+            } else if (i <= 5 && leftOpponentsColumn != null) {
+                // Next 2 opponents go in left column
+                leftOpponentsColumn.getChildren().add(opponentBox);
+            } else if (rightOpponentsColumn != null) {
+                // Last 2 opponents go in right column
+                rightOpponentsColumn.getChildren().add(opponentBox);
+            }
+        }
+    }
+
+    private void updateDiscardPile() {
         Card topCard = game.getTopCard();
         try {
             discardPileView.setImage(new Image(getClass().getResourceAsStream(topCard.getImagePath())));
         } catch (Exception e) {
-            // Handle the case where card images aren't available
+            // Handle case where images aren't available
+            // This just keeps the existing image or does nothing
         }
-
-        // Update current color indicator
-        updateColorIndicator();
-
-        // Update status label
-        Player currentPlayer = game.getCurrentPlayer();
-        statusLabel.setText("Current turn: " + currentPlayer.getName());
-
-        // Update button states
-        updateButtonStates();
     }
 
     private void updateColorIndicator() {
@@ -296,7 +363,7 @@ public class GameController implements Initializable {
         } else if (card.getType() == Card.Type.REVERSE) {
             actionText += " - Direction reversed!";
             showNotification("REVERSE!", Color.ORANGE);
-            updateGameDirectionLabel(false); // Toggle direction
+            updateGameDirectionLabel(false); // Toggle direction (using your existing method)
         } else if (card.getType() == Card.Type.DRAW_TWO) {
             actionText += " - Next player draws 2 cards!";
             showNotification("+2 CARDS", Color.RED);
@@ -310,9 +377,13 @@ public class GameController implements Initializable {
 
     // Show a temporary notification for important game events
     private void showNotification(String message, Color color) {
+        if (notificationArea == null) return;
+
         Text notification = new Text(message);
         notification.setFont(Font.font("System", FontWeight.BOLD, 24));
         notification.setFill(color);
+        notification.setStroke(Color.WHITE);
+        notification.setStrokeWidth(0.5);
 
         notificationArea.getChildren().clear();
         notificationArea.getChildren().add(notification);
@@ -328,7 +399,7 @@ public class GameController implements Initializable {
         fadeOut.setOnFinished(e -> notificationArea.getChildren().clear());
     }
 
-    // Update the game direction indicator
+    // Update the game direction indicator (using your existing method)
     private void updateGameDirectionLabel(boolean isClockwise) {
         if (isFirstTurn) {
             // On first turn, just set without toggling
@@ -354,8 +425,9 @@ public class GameController implements Initializable {
         dialog.setTitle("Choose a Color");
         dialog.setHeaderText("Select a color for the Wild card.");
 
-        // Create color buttons
+        // Create color buttons with improved styling
         Button redButton = new Button("Red");
+        redButton.setStyle("-fx-background-color: #ff6666; -fx-text-fill: white;");
         redButton.setOnAction(event -> {
             game.setCurrentColor(Card.Color.RED);
             dialog.setResult(Card.Color.RED);
@@ -363,6 +435,7 @@ public class GameController implements Initializable {
         });
 
         Button blueButton = new Button("Blue");
+        blueButton.setStyle("-fx-background-color: #6666ff; -fx-text-fill: white;");
         blueButton.setOnAction(event -> {
             game.setCurrentColor(Card.Color.BLUE);
             dialog.setResult(Card.Color.BLUE);
@@ -370,6 +443,7 @@ public class GameController implements Initializable {
         });
 
         Button greenButton = new Button("Green");
+        greenButton.setStyle("-fx-background-color: #66ff66; -fx-text-fill: white;");
         greenButton.setOnAction(event -> {
             game.setCurrentColor(Card.Color.GREEN);
             dialog.setResult(Card.Color.GREEN);
@@ -377,20 +451,16 @@ public class GameController implements Initializable {
         });
 
         Button yellowButton = new Button("Yellow");
+        yellowButton.setStyle("-fx-background-color: #ffff66; -fx-text-fill: black;");
         yellowButton.setOnAction(event -> {
             game.setCurrentColor(Card.Color.YELLOW);
             dialog.setResult(Card.Color.YELLOW);
             dialog.close();
         });
 
-        // Style the color buttons to show their actual colors
-        redButton.setStyle("-fx-background-color: #ff6666; -fx-text-fill: white;");
-        blueButton.setStyle("-fx-background-color: #6666ff; -fx-text-fill: white;");
-        greenButton.setStyle("-fx-background-color: #66ff66; -fx-text-fill: white;");
-        yellowButton.setStyle("-fx-background-color: #ffff66; -fx-text-fill: black;");
-
         HBox buttonBox = new HBox(10, redButton, blueButton, greenButton, yellowButton);
         buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.setPrefHeight(60);
 
         dialog.getDialogPane().setContent(buttonBox);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
@@ -399,9 +469,9 @@ public class GameController implements Initializable {
         result.ifPresent(color -> game.setCurrentColor(color));
     }
 
-    // Changed to use drawCard() instead of drawCardForPlayer()
+    // Using your existing handleDrawCard method
     private void handleDrawCard() {
-        if (game.getCurrentPlayer() != game.getPlayers().get(0)) {
+        if (game.getCurrentPlayer() != game.getPlayers().getFirst()) {
             // Not player's turn
             return;
         }
@@ -420,7 +490,7 @@ public class GameController implements Initializable {
         updateUI();
     }
 
-    // Helper method to get how many cards have been drawn this turn
+    // Helper method to get how many cards have been drawn this turn (unchanged)
     private int getCardsDrawnCount() {
         // This is an estimate of cards drawn this turn based on the text
         String actionText = lastActionLabel.getText();
@@ -437,9 +507,9 @@ public class GameController implements Initializable {
         return 1;
     }
 
-    // Handle end turn button click
+    // Handle end turn button click (unchanged)
     private void handleEndTurn() {
-        if (game.getCurrentPlayer() != game.getPlayers().get(0) || !hasDrawnCard) {
+        if (game.getCurrentPlayer() != game.getPlayers().getFirst() || !hasDrawnCard) {
             // Not player's turn or player hasn't drawn a card yet
             return;
         }
@@ -467,7 +537,7 @@ public class GameController implements Initializable {
                 alert.showAndWait();
 
                 // Start a new game
-                game = new Game(4);
+                game = new Game(game.getPlayers().size()); // Keep same player count
                 isFirstTurn = true;
                 hasDrawnCard = false;
                 updateUI();
@@ -489,6 +559,7 @@ public class GameController implements Initializable {
             // Update status immediately to show whose turn it is
             Platform.runLater(() -> {
                 statusLabel.setText("Current turn: " + currentPlayer.getName() + " (thinking...)");
+                updateUI(); // Update the UI to highlight the current player
             });
 
             // Add a delay to make the computer's turn visible to the player
