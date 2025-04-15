@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Deck {
     private List<Card> cards;
-    private List<Card> discardPile;
+    private final List<Card> discardPile;
 
     public Deck() {
         cards = new ArrayList<>();
@@ -39,7 +39,7 @@ public class Deck {
         // Add wild cards (4 of each)
         for (int i = 0; i < 4; i++) {
             cards.add(new Card(Card.Color.WILD, Card.Type.WILD, -1));
-            cards.add(new Card(Card.Color.WILD, Card.Type.WILD_DRAW_FOUR, -1));
+            cards.add(new Card(Card.Color.WILD, Card.Type.DRAW_FOUR, -1));
         }
     }
 
@@ -49,20 +49,22 @@ public class Deck {
 
     public Card drawCard() {
         if (cards.isEmpty()) {
-            // If deck is empty, shuffle the discard pile (except the top card)
-            // and make it the new deck
+            // If deck is empty, first try to shuffle the discard pile
             if (discardPile.size() <= 1) {
-                return null; // Game over, no more cards
+                // Instead of returning null (game over), create a new deck
+                initializeDeck();
+                shuffle();
+            } else {
+                // Use the discard pile (except top card) as the new deck
+                Card topCard = discardPile.removeLast();
+                cards = new ArrayList<>(discardPile);
+                discardPile.clear();
+                discardPile.add(topCard);
+                shuffle();
             }
-
-            Card topCard = discardPile.remove(discardPile.size() - 1);
-            cards = new ArrayList<>(discardPile);
-            discardPile.clear();
-            discardPile.add(topCard);
-            shuffle();
         }
 
-        return cards.remove(cards.size() - 1);
+        return cards.removeLast();
     }
 
     public void discard(Card card) {
@@ -73,10 +75,7 @@ public class Deck {
         if (discardPile.isEmpty()) {
             return null;
         }
-        return discardPile.get(discardPile.size() - 1);
+        return discardPile.getLast();
     }
 
-    public int getRemainingCards() {
-        return cards.size();
-    }
 }

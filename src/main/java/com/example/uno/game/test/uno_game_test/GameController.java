@@ -2,7 +2,6 @@ package com.example.uno.game.test.uno_game_test;
 
 import com.example.uno.game.test.uno_game_test.Models.*;
 import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -37,13 +36,15 @@ public class GameController implements Initializable {
     @FXML private VBox opponentArea;
     @FXML private ImageView discardPileView;
     @FXML private Button drawButton;
+    @FXML private Button endTurnButton;  // New: Button to end turn after drawing
     @FXML private Label statusLabel;
     @FXML private Label currentColorLabel;
     @FXML private Rectangle colorIndicator;
-    @FXML private StackPane notificationArea; // New: Area for displaying notifications like skip and reverse
-    @FXML private Label gameDirectionLabel; // New: Shows current game direction
-    @FXML private Label lastActionLabel; // New: Shows the last card played and its effect
+    @FXML private StackPane notificationArea; // Area for displaying notifications like skip and reverse
+    @FXML private Label gameDirectionLabel; // Shows current game direction
+    @FXML private Label lastActionLabel; // Shows the last card played and its effect
 
+    private boolean hasDrawnCard = false;  // Track if player has drawn at least one card
     private Game game;
     private final ScheduledExecutorService computerPlayerTimer = Executors.newSingleThreadScheduledExecutor();
     private boolean isFirstTurn = true; // Track if this is the first turn
@@ -78,11 +79,30 @@ public class GameController implements Initializable {
             gamePane.getChildren().add(lastActionBox);
         }
 
+        // Create end turn button if it doesn't exist in FXML
+        if (endTurnButton == null) {
+            endTurnButton = new Button("End Turn");
+            HBox buttonBox = new HBox(10, drawButton, endTurnButton);
+            buttonBox.setAlignment(Pos.CENTER);
+            gamePane.getChildren().add(buttonBox);
+
+            // Remove original draw button if it's in a separate location
+            if (drawButton.getParent() != buttonBox) {
+                gamePane.getChildren().remove(drawButton);
+            }
+        }
+
         // Set up the UI
         updateUI();
 
-        // Set up draw card button
+        // Set up draw card button - now uses the new drawCard method
         drawButton.setOnAction(e -> handleDrawCard());
+
+        // Set up end turn button
+        endTurnButton.setOnAction(e -> handleEndTurn());
+
+        // Update button states
+        updateButtonStates();
 
         // Start computer player turns if needed
         checkAndStartComputerTurn();
@@ -91,8 +111,21 @@ public class GameController implements Initializable {
     public void startGame(int numPlayers) {
         game = new Game(numPlayers + 1);
         isFirstTurn = true;
+        hasDrawnCard = false;
         updateUI();
+        updateButtonStates();
         updateGameDirectionLabel(true); // Default direction is clockwise
+    }
+
+    // Update button states based on game state
+    private void updateButtonStates() {
+        boolean isPlayerTurn = game.getCurrentPlayer() == game.getPlayers().getFirst();
+
+        // Draw button is always enabled during player's turn
+        drawButton.setDisable(!isPlayerTurn);
+
+        // End Turn button is only enabled if player has drawn at least one card
+        endTurnButton.setDisable(!isPlayerTurn || !hasDrawnCard);
     }
 
     private void updateUI() {
@@ -173,6 +206,9 @@ public class GameController implements Initializable {
         // Update status label
         Player currentPlayer = game.getCurrentPlayer();
         statusLabel.setText("Current turn: " + currentPlayer.getName());
+
+        // Update button states
+        updateButtonStates();
     }
 
     private void updateColorIndicator() {
@@ -182,23 +218,23 @@ public class GameController implements Initializable {
     }
 
     private Color getJavaFXColor(Card.Color cardColor) {
-        switch (cardColor) {
-            case RED: return Color.RED;
-            case BLUE: return Color.BLUE;
-            case GREEN: return Color.GREEN;
-            case YELLOW: return Color.YELLOW;
-            case WILD: return Color.BLACK;
-            default: return Color.GRAY;
-        }
+        return switch (cardColor) {
+            case RED -> Color.RED;
+            case BLUE -> Color.BLUE;
+            case GREEN -> Color.GREEN;
+            case YELLOW -> Color.YELLOW;
+            case WILD -> Color.BLACK;
+            default -> Color.GRAY;
+        };
     }
 
     private void handleCardClick(int cardIndex) {
-        if (game.getCurrentPlayer() != game.getPlayers().get(0)) {
+        if (game.getCurrentPlayer() != game.getPlayers().getFirst()) {
             // Not player's turn
             return;
         }
 
-        Card card = game.getPlayers().get(0).getHand().get(cardIndex);
+        Card card = game.getPlayers().getFirst().getHand().get(cardIndex);
 
         if (card.getColor() == Card.Color.WILD) {
             // For wild cards, prompt for color selection
@@ -206,11 +242,13 @@ public class GameController implements Initializable {
             if (game.playCard(cardIndex)) {
                 // Update last action based on card type
                 updateLastAction(card);
-
                 updateUI();
 
                 // Check for UNO or win
                 checkGameStatus();
+
+                // Reset drawn card flag for next turn
+                hasDrawnCard = false;
 
                 // Start computer turns if needed
                 checkAndStartComputerTurn();
@@ -219,11 +257,13 @@ public class GameController implements Initializable {
             if (game.playCard(cardIndex)) {
                 // Update last action based on card type
                 updateLastAction(card);
-
                 updateUI();
 
                 // Check for UNO or win
                 checkGameStatus();
+
+                // Reset drawn card flag for next turn
+                hasDrawnCard = false;
 
                 // Start computer turns if needed
                 checkAndStartComputerTurn();
@@ -238,7 +278,7 @@ public class GameController implements Initializable {
         }
     }
 
-    // New: Update the last action label based on the card played
+    // Update the last action label based on the card played
     private void updateLastAction(Card card) {
         String actionText = "Played ";
 
@@ -260,7 +300,7 @@ public class GameController implements Initializable {
         } else if (card.getType() == Card.Type.DRAW_TWO) {
             actionText += " - Next player draws 2 cards!";
             showNotification("+2 CARDS", Color.RED);
-        } else if (card.getType() == Card.Type.WILD_DRAW_FOUR) {
+        } else if (card.getType() == Card.Type.DRAW_FOUR) {
             actionText += " - Next player draws 4 cards!";
             showNotification("+4 CARDS", Color.DARKRED);
         }
@@ -268,7 +308,7 @@ public class GameController implements Initializable {
         lastActionLabel.setText(actionText);
     }
 
-    // New: Show a temporary notification for important game events
+    // Show a temporary notification for important game events
     private void showNotification(String message, Color color) {
         Text notification = new Text(message);
         notification.setFont(Font.font("System", FontWeight.BOLD, 24));
@@ -288,7 +328,7 @@ public class GameController implements Initializable {
         fadeOut.setOnFinished(e -> notificationArea.getChildren().clear());
     }
 
-    // New: Update the game direction indicator
+    // Update the game direction indicator
     private void updateGameDirectionLabel(boolean isClockwise) {
         if (isFirstTurn) {
             // On first turn, just set without toggling
@@ -303,16 +343,9 @@ public class GameController implements Initializable {
         if (isClockwise) {
             // Set to specific value
             gameDirectionLabel.setText("Direction: Clockwise →");
-        } else if (!isClockwise) {
+        } else {
             // Set to specific value
             gameDirectionLabel.setText("Direction: Counter-clockwise ←");
-        } else {
-            // Toggle current direction
-            if (currentIsClockwise) {
-                gameDirectionLabel.setText("Direction: Counter-clockwise ←");
-            } else {
-                gameDirectionLabel.setText("Direction: Clockwise →");
-            }
         }
     }
 
@@ -366,15 +399,58 @@ public class GameController implements Initializable {
         result.ifPresent(color -> game.setCurrentColor(color));
     }
 
+    // Changed to use drawCard() instead of drawCardForPlayer()
     private void handleDrawCard() {
         if (game.getCurrentPlayer() != game.getPlayers().get(0)) {
             // Not player's turn
             return;
         }
 
-        game.drawCardForPlayer();
-        lastActionLabel.setText("You drew a card");
+        // Use the new drawCard method which doesn't advance the turn
+        game.drawCard();
+
+        // Update last action text
+        int drawnCards = hasDrawnCard ? getCardsDrawnCount() + 1 : 1;
+        lastActionLabel.setText("You drew " + drawnCards + (drawnCards == 1 ? " card" : " cards"));
+
+        // Mark that player has drawn at least one card
+        hasDrawnCard = true;
+
+        // Update UI to show the new card and button states
         updateUI();
+    }
+
+    // Helper method to get how many cards have been drawn this turn
+    private int getCardsDrawnCount() {
+        // This is an estimate of cards drawn this turn based on the text
+        String actionText = lastActionLabel.getText();
+        if (actionText.startsWith("You drew ")) {
+            try {
+                String[] parts = actionText.split(" ");
+                if (parts.length >= 3) {
+                    return Integer.parseInt(parts[2]);
+                }
+            } catch (NumberFormatException e) {
+                // If we can't parse the number, just return 1
+            }
+        }
+        return 1;
+    }
+
+    // Handle end turn button click
+    private void handleEndTurn() {
+        if (game.getCurrentPlayer() != game.getPlayers().get(0) || !hasDrawnCard) {
+            // Not player's turn or player hasn't drawn a card yet
+            return;
+        }
+
+        // Advance to the next player's turn
+        game.nextPlayer();
+        hasDrawnCard = false;  // Reset the flag for next turn
+        updateUI();
+
+        // Show notification that turn has ended
+        showNotification("Turn Ended", Color.GRAY);
 
         // Start computer turns if needed
         checkAndStartComputerTurn();
@@ -393,6 +469,7 @@ public class GameController implements Initializable {
                 // Start a new game
                 game = new Game(4);
                 isFirstTurn = true;
+                hasDrawnCard = false;
                 updateUI();
                 updateGameDirectionLabel(true);
                 return;
@@ -458,7 +535,7 @@ public class GameController implements Initializable {
             } else if (selectedCard.getType() == Card.Type.DRAW_TWO) {
                 computerAction += " - Next player draws 2 cards!";
                 showNotification("+2 CARDS", Color.RED);
-            } else if (selectedCard.getType() == Card.Type.WILD_DRAW_FOUR) {
+            } else if (selectedCard.getType() == Card.Type.DRAW_FOUR) {
                 computerAction += " - Next player draws 4 cards!";
                 showNotification("+4 CARDS", Color.DARKRED);
             }
@@ -468,6 +545,7 @@ public class GameController implements Initializable {
 
         } else {
             // No valid move, draw a card
+            // Still using drawCardForPlayer for computer players (draws and ends turn)
             game.drawCardForPlayer();
             lastActionLabel.setText(computer.getName() + " drew a card");
         }

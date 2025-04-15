@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Game {
-    private Deck deck;
-    private List<Player> players;
+    private final Deck deck;
+    private final List<Player> players;
     private int currentPlayerIndex;
     private boolean isClockwise;
     private Card.Color currentColor;
@@ -84,9 +84,24 @@ public class Game {
         return false;
     }
 
-    public Card drawCardForPlayer() {
+    /**
+     * Draws a card for the current player WITHOUT advancing to the next player.
+     * This allows players to draw multiple cards on their turn.
+     * @return The drawn card
+     */
+    public Card drawCard() {
         Card card = deck.drawCard();
         getCurrentPlayer().addCard(card);
+        return card;
+    }
+
+    /**
+     * Legacy method that draws a card and advances to the next player.
+     * Used by computer players who always draw one card then end turn.
+     * @return The drawn card
+     */
+    public Card drawCardForPlayer() {
+        Card card = drawCard();
         nextPlayer();
         return card;
     }
@@ -124,7 +139,7 @@ public class Game {
                 nextPlayer();
                 break;
 
-            case WILD_DRAW_FOUR:
+            case DRAW_FOUR:
                 // currentColor will be set by the player
                 nextPlayer();
                 // Next player draws 4 cards
@@ -137,7 +152,7 @@ public class Game {
         }
     }
 
-    private void nextPlayer() {
+    public void nextPlayer() {
         if (isClockwise) {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
         } else {

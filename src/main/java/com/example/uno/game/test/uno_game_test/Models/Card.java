@@ -1,17 +1,20 @@
 package com.example.uno.game.test.uno_game_test.Models;
 
+/**
+ * Card class for Uno game
+ */
 public class Card {
+    private final Color color;
+    private final Type type;
+    private final int number; // -1 for action cards
+
     public enum Color {
         RED, BLUE, GREEN, YELLOW, WILD
     }
 
     public enum Type {
-        NUMBER, SKIP, REVERSE, DRAW_TWO, WILD, WILD_DRAW_FOUR
+        NUMBER, SKIP, REVERSE, DRAW_TWO, WILD, DRAW_FOUR
     }
-
-    private final Color color;
-    private final Type type;
-    private final int number; // -1 for action cards
 
     public Card(Color color, Type type, int number) {
         this.color = color;
@@ -19,6 +22,7 @@ public class Card {
         this.number = number;
     }
 
+    // Getters
     public Color getColor() {
         return color;
     }
