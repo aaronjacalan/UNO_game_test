@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane styleClass="root-pane" stylesheets="@css/gameSetup.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.uno.game.test.uno_game_test.GameSetupController">
+
+    <BorderPane>
+        <top>
+            <HBox alignment="CENTER" styleClass="header-container">
+                <Label styleClass="header-label" text="UNO Game Setup" />
+            </HBox>
+        </top>
+
+        <center>
+            <SplitPane dividerPositions="0.5" styleClass="main-split-pane">
+                <!-- LEFT SIDE: Game Settings -->
+                <ScrollPane fitToWidth="true" styleClass="transparent">
+                    <VBox spacing="20.0" styleClass="settings-container">
+                        <padding>
+                            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                        </padding>
+
+                        <Label styleClass="section-header" text="Game Configuration" />
+
+                        <GridPane hgap="15.0" styleClass="config-grid" vgap="10.0">
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="NEVER" minWidth="150" />
+                                <ColumnConstraints hgrow="SOMETIMES" />
+                            </columnConstraints>
+
+                            <Label styleClass="setting-label" text="UNO Version:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <ComboBox fx:id="unoVersionComboBox" promptText="Select a version" styleClass="combo-box" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <items>
+                                    <FXCollections fx:factory="observableArrayList">
+                                        <String fx:value="Classic" />
+                                        <String fx:value="No Mercy" />
+                                    </FXCollections>
+                                </items>
+                            </ComboBox>
+
+                            <Label styleClass="setting-label" text="Number of Players:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <Spinner fx:id="numberOfPlayersSpinner" initialValue="3" max="8" min="2" styleClass="spinner" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                            <rowConstraints>
+                                <RowConstraints />
+                                <RowConstraints />
+                            </rowConstraints>
+                        </GridPane>
+
+                        <TitledPane expanded="true" text="Gameplay Settings">
+                            <content>
+                                <GridPane hgap="15.0" vgap="10.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints hgrow="NEVER" minWidth="150" />
+                                        <ColumnConstraints hgrow="NEVER" minWidth="40" />
+                                        <ColumnConstraints hgrow="SOMETIMES" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                    </rowConstraints>
+
+                                    <Label styleClass="setting-label" text="Allow Stacking:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <CheckBox fx:id="allowStackingCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                    <Label styleClass="help-label" text="(Lets you stack cards of the same number and color)" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+
+                                    <Label styleClass="setting-label" text="Allow Jump-In:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                    <CheckBox fx:id="allowJumpInCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <Label styleClass="help-label" text="(Lets you play a card that matches the one currently being played)" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+                                    <Label styleClass="setting-label" text="Seven-O:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                    <CheckBox fx:id="playSevenZeroRuleCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Label styleClass="help-label" text="(Swap cards with a player of your choice)" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+
+                                    <Label styleClass="setting-label" text="0's Pass:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                    <CheckBox fx:id="playZeroToPassToNextInDirectionCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <Label styleClass="help-label" text="(All players must pass their hand to the next player in turn)" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+
+                                    <Label styleClass="setting-label" text="Draw Cards if No Match:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                    <CheckBox fx:id="drawCardsCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                    <Label styleClass="help-label" text="(If your drawn card matches the top discard, play it; if not, keep it and end your turn.)" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+
+                                    <Label styleClass="setting-label" text="Stack Draw Cards" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                    <CheckBox fx:id="stackDrawCardsCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                    <Label styleClass="help-label" text="(Draw cards can stack, passing the total to the next player.)" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+
+                                </GridPane>
+                            </content>
+                        </TitledPane>
+
+                        <TitledPane expanded="true" text="Game Rules">
+                            <content>
+                                <GridPane hgap="15.0" vgap="10.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints hgrow="NEVER" minWidth="150" />
+                                        <ColumnConstraints hgrow="NEVER" minWidth="40"  />
+                                        <ColumnConstraints hgrow="SOMETIMES" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints />
+                                        <RowConstraints />
+                                    </rowConstraints>
+
+                                    <Label styleClass="setting-label" text="Strict Wild Draw Four:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <CheckBox fx:id="strictWildDrawFourCheckBox" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                    <Label styleClass="help-label" text="(Only when no other option)" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                                </GridPane>
+                            </content>
+                        </TitledPane>
+
+                    </VBox>
+                </ScrollPane>
+
+                <!-- RIGHT SIDE: Player Lobby -->
+                <VBox spacing="20.0" styleClass="lobby-container">
+                    <padding>
+                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                    </padding>
+
+                    <HBox alignment="CENTER_LEFT" spacing="20.0">
+                        <Label styleClass="section-header" text="Player Lobby" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="dateTimeLabel" styleClass="datetime-label" text="2025-04-21 08:18:33" />
+                    </HBox>
+
+                    <TitledPane expanded="true" styleClass="section-pane" text="Players" VBox.vgrow="ALWAYS" collapsible="false">
+                        <VBox spacing="10">
+                            <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="players-scroll" VBox.vgrow="ALWAYS">
+                                <VBox fx:id="playersContainer" spacing="8" styleClass="players-list">
+                                    <!-- Player entries will be added dynamically -->
+
+                                    <!-- Example entries for layout - these would typically be created dynamically -->
+                                </VBox>
+                            </ScrollPane>
+                        </VBox>
+                    </TitledPane>
+                </VBox>
+            </SplitPane>
+        </center>
+
+        <bottom>
+            <HBox alignment="CENTER" spacing="40.0" styleClass="button-container">
+                <padding>
+                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                </padding>
+                <Button fx:id="startGameButton" styleClass="primary-button" text="Start Game" prefWidth="200.0">
+                    <tooltip>
+                        <Tooltip text="Click to start the game with selected settings." />
+                    </tooltip>
+                </Button>
+                <Button fx:id="cancelButton" styleClass="cancel-button" text="Cancel" prefWidth="200.0">
+                    <tooltip>
+                        <Tooltip text="Click to cancel and return to the main menu." />
+                    </tooltip>
+                </Button>
+            </HBox>
+        </bottom>
+    </BorderPane>
+</StackPane>

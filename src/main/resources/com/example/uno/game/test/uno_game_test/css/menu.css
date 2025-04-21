@@ -1,0 +1,112 @@
+.root-pane {
+    -fx-background-color: #FFFFFF;
+}
+
+.background-rect {
+    -fx-fill: linear-gradient(to bottom, #FFFFFF, #0075FF);
+    -fx-opacity: 0.5;
+}
+
+.content-container {
+    -fx-spacing: 50;
+    -fx-padding: 20;
+}
+
+.header-container {
+    -fx-padding: 20px;
+    -fx-spacing: 5;
+}
+
+.game-title {
+    -fx-font-family: "Arial Black";
+    -fx-font-size: 100px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FF0000;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 3);
+}
+
+.subtitle {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #77DC65;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 2, 0, 0, 1);
+}
+
+.menu-options-container {
+    -fx-padding: 20px;
+    -fx-spacing: 15;
+    -fx-max-width: 400px;
+    -fx-alignment: center;
+}
+
+.primary-button {
+    -fx-background-color: #77DC65;
+    -fx-text-fill: black;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 15 30 15 30;
+    -fx-cursor: hand;
+    -fx-background-radius: 8px;
+    -fx-min-width: 300px;
+    -fx-max-width: 300px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);
+}
+
+.primary-button:hover {
+    -fx-background-color: #7CFC00;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 6, 0, 0, 3);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.cancel-button {
+    -fx-background-color: #FF4545;
+    -fx-text-fill: black;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 15 30 15 30;
+    -fx-cursor: hand;
+    -fx-background-radius: 8px;
+    -fx-min-width: 300px;
+    -fx-max-width: 300px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);
+}
+
+.cancel-button:hover {
+    -fx-background-color: #ff0000;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 6, 0, 0, 3);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.footer-container {
+    -fx-padding: 10px;
+    -fx-spacing: 10;
+}
+
+.copyright-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: black;
+    -fx-opacity: 0.8;
+}
+
+@media (max-width: 800px) {
+    .game-title {
+        -fx-font-size: 80px;
+    }
+
+    .subtitle {
+        -fx-font-size: 20px;
+    }
+
+    .primary-button, .cancel-button {
+        -fx-min-width: 250px;
+        -fx-max-width: 250px;
+        -fx-font-size: 16px;
+    }
+}
+
+/* High-density screens support */
+.high-dpi {
+    -fx-font-size: 1.2em;
+}

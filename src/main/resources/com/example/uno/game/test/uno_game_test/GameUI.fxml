@@ -1,160 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Rectangle?>
-<?import javafx.scene.text.Font?>
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.uno.game.test.uno_game_test.GameController"
-            prefHeight="800.0" prefWidth="1200.0"
-            stylesheets="@css/gameUI_style.css">
-
-    <!-- Top section: Game info and opponent area (top row) -->
-    <top>
-        <VBox spacing="10" alignment="CENTER">
-            <padding>
-                <Insets top="15" bottom="15" left="20" right="20" />
-            </padding>
-
-            <!-- Game info bar -->
-            <HBox alignment="CENTER" spacing="30" styleClass="game-info-bar">
-                <padding>
-                    <Insets top="10" bottom="10" left="15" right="15" />
-                </padding>
-
-                <Label fx:id="gameRoundLabel" text="Round 1" styleClass="info-label">
-                    <font>
-                        <Font name="System Bold" size="16.0" />
-                    </font>
-                </Label>
-
-                <Label fx:id="directionLabel" text="↻ Clockwise" styleClass="info-label">
-                    <font>
-                        <Font name="System Bold" size="16.0" />
-                    </font>
-                </Label>
-
-                <Label fx:id="currentPlayerLabel" text="Current Player: You" styleClass="info-label">
-                    <font>
-                        <Font name="System Bold" size="16.0" />
-                    </font>
-                </Label>
-            </HBox>
-
-            <!-- Top row opponents (3) -->
-            <HBox fx:id="topOpponentsRow" alignment="CENTER" spacing="30" styleClass="opponents-row">
-                <padding>
-                    <Insets top="10" bottom="10" />
-                </padding>
-            </HBox>
-        </VBox>
-    </top>
-
-    <!-- Left side opponents (2) -->
-    <left>
-        <VBox fx:id="leftOpponentsColumn" alignment="CENTER" spacing="20" styleClass="opponents-column">
-            <padding>
-                <Insets left="15" right="15" />
-            </padding>
-        </VBox>
-    </left>
-
-    <!-- Right side opponents (2) -->
-    <right>
-        <VBox fx:id="rightOpponentsColumn" alignment="CENTER" spacing="20" styleClass="opponents-column">
-            <padding>
-                <Insets left="15" right="15" />
-            </padding>
-        </VBox>
-    </right>
-
-    <!-- Center game area -->
+            prefHeight="768.0" prefWidth="1366.0" >
     <center>
-        <StackPane alignment="CENTER">
-            <!-- Background for play area -->
-            <Rectangle fx:id="playAreaBackground" styleClass="play-area-background" arcHeight="30" arcWidth="30" />
+        <VBox fx:id="gamePane" alignment="CENTER" spacing="10">
+            <VBox fx:id="opponentArea" alignment="CENTER" spacing="20" />
 
-            <VBox alignment="CENTER" spacing="20">
-                <!-- Status message -->
-                <Label fx:id="statusLabel" text="Your turn!" styleClass="status-label">
-                    <font>
-                        <Font size="18.0" />
-                    </font>
-                </Label>
+            <HBox alignment="CENTER" spacing="30">
+                <VBox alignment="CENTER">
+                    <Label text="Discard Pile" />
+                    <ImageView fx:id="discardPileView" fitHeight="150" fitWidth="100" preserveRatio="true" />
+                </VBox>
 
-                <!-- Game piles -->
-                <HBox alignment="CENTER" spacing="50">
-                    <!-- Draw pile -->
-                    <VBox alignment="CENTER" spacing="10" styleClass="card-pile">
-                        <Label text="Draw Pile" styleClass="pile-label" />
-                        <StackPane>
-                            <ImageView fx:id="drawPileView" fitHeight="180" fitWidth="120" preserveRatio="true" styleClass="card-image" />
-                            <Label fx:id="drawPileCount" text="42" styleClass="card-count-label" />
-                        </StackPane>
-                        <Button fx:id="drawButton" text="Draw Card" styleClass="game-button" />
-                    </VBox>
+                <VBox alignment="CENTER">
+                    <Label text="Draw Pile" />
+                    <Button fx:id="drawButton" text="Draw Card" />
+                </VBox>
 
-                    <!-- Discard pile -->
-                    <VBox alignment="CENTER" spacing="10" styleClass="card-pile">
-                        <Label text="Discard Pile" styleClass="pile-label" />
-                        <ImageView fx:id="discardPileView" fitHeight="180" fitWidth="120" preserveRatio="true" styleClass="card-image" />
-                    </VBox>
+                <VBox alignment="CENTER" spacing="5">
+                    <Label fx:id="currentColorLabel" text="Current Color: RED" />
+                    <Rectangle fx:id="colorIndicator" width="50" height="50" />
+                </VBox>
+            </HBox>
 
-                    <!-- Color indicator -->
-                    <VBox alignment="CENTER" spacing="10">
-                        <Label text="Current Color" styleClass="pile-label" />
-                        <StackPane>
-                            <Rectangle fx:id="colorIndicator" width="80" height="80" arcHeight="10" arcWidth="10" styleClass="color-indicator" />
-                            <Label fx:id="currentColorLabel" text="RED" styleClass="color-label" />
-                        </StackPane>
-                    </VBox>
-                </HBox>
+            <Label fx:id="statusLabel" text="Your turn!" />
 
-                <!-- Action buttons -->
-                <HBox alignment="CENTER" spacing="15">
-                    <Button fx:id="callUnoButton" text="Call UNO!" styleClass="uno-button" />
-                    <Button fx:id="challengeButton" text="Challenge" styleClass="game-button" />
-                </HBox>
-
-                <!-- Wild card color selection (initially hidden) onAction="#selectColor" -->
-                <HBox fx:id="colorSelectionPane" alignment="CENTER" spacing="15" visible="false" managed="false">
-                    <Button text="RED" styleClass="color-button, red-button"  />
-                    <Button text="BLUE" styleClass="color-button, blue-button" />
-                    <Button text="GREEN" styleClass="color-button, green-button" />
-                    <Button text="YELLOW" styleClass="color-button, yellow-button" />
-                </HBox>
-            </VBox>
-        </StackPane>
-    </center>
-
-    <!-- Bottom section: Player hand -->
-    <bottom>
-        <VBox alignment="CENTER" spacing="10">
-            <padding>
-                <Insets top="10" bottom="20" left="20" right="20" />
-            </padding>
-
-            <Label text="Your Cards" styleClass="section-label">
-                <font>
-                    <Font name="System Bold" size="14.0" />
-                </font>
-            </Label>
-
-            <!-- Scrollable player hand area -->
-            <ScrollPane fx:id="playerHandScroll" hbarPolicy="AS_NEEDED" vbarPolicy="NEVER" styleClass="hand-scroll-pane">
-                <FlowPane fx:id="playerHand" alignment="CENTER" hgap="5" vgap="5" styleClass="player-hand" />
-            </ScrollPane>
+            <HBox fx:id="playerHand" alignment="CENTER" spacing="5" />
         </VBox>
-    </bottom>
+    </center>
 </BorderPane>

@@ -1,0 +1,238 @@
+.root-pane {
+    -fx-background-color: #F9F9F9;
+}
+
+.transparent {
+    -fx-background-color: transparent;
+}
+
+.main-split-pane {
+    -fx-background-color: transparent;
+    -fx-min-width: 300px;
+}
+
+.main-split-pane .split-pane-divider {
+    -fx-background-color: #DADADA;
+    -fx-padding: 0 1 0 1;
+}
+
+.header-container {
+    -fx-padding: 10px 20px;
+    -fx-background-color: #2C3E50;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
+    -fx-min-height: 50px;
+}
+
+.header-label {
+    -fx-font-size: 1.5em;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-wrap-text: true;
+}
+
+.datetime-label {
+    -fx-font-size: 0.85em;
+    -fx-text-fill: #7F8C8D;
+    -fx-wrap-text: true;
+}
+
+.section-header {
+    -fx-font-size: 1.1em;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495E;
+    -fx-wrap-text: true;
+}
+
+.section-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 1);
+    -fx-min-width: 250px;
+}
+
+.section-pane > .title {
+    -fx-font-size: 1em;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495E;
+    -fx-background-color: #ECF0F1;
+    -fx-wrap-text: true;
+}
+
+.settings-container, .lobby-container {
+    -fx-background-color: transparent;
+    -fx-min-width: 250px;
+}
+
+.settings-grid, .config-grid {
+    -fx-padding: 10px;
+    -fx-hgap: 10px;
+    -fx-vgap: 10px;
+}
+
+.setting-label {
+    -fx-font-size: 0.9em;
+    -fx-text-fill: #2C3E50;
+    -fx-wrap-text: true;
+}
+
+.help-label {
+    -fx-font-size: 0.8em;
+    -fx-text-fill: #7F8C8D;
+    -fx-font-style: italic;
+    -fx-wrap-text: true;
+}
+
+.combo-box, .spinner {
+    -fx-pref-width: 200px;
+    -fx-max-width: 100%;
+    -fx-min-width: 120px;
+}
+
+.players-scroll {
+    -fx-background-color: transparent;
+    -fx-fit-to-width: true;
+    -fx-pannable: true;
+}
+
+.players-list {
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+}
+
+.player-entry {
+    -fx-padding: 10px;
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 4px;
+    -fx-border-color: #EEEEEE;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 2, 0, 0, 1);
+    -fx-max-width: 1000px;
+    -fx-min-width: 200px;
+}
+
+.host-player {
+    -fx-background-color: #E8F5E9;
+    -fx-border-color: #C8E6C9;
+}
+
+.ai-player {
+    -fx-background-color: #E8F0FE;
+    -fx-border-color: #BBDEFB;
+}
+
+.player-name {
+    -fx-font-size: 0.9em;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C3E50;
+    -fx-wrap-text: true;
+}
+
+.player-role {
+    -fx-font-size: 0.8em;
+    -fx-text-fill: #7F8C8D;
+    -fx-padding: 3px 8px;
+    -fx-background-color: #EEEEEE;
+    -fx-background-radius: 10px;
+    -fx-wrap-text: true;
+}
+
+.waiting-text {
+    -fx-font-style: italic;
+    -fx-text-fill: #95A5A6;
+    -fx-wrap-text: true;
+}
+
+.button-container {
+    -fx-background-color: #EEEEEE;
+    -fx-border-color: #DADADA;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 10px;
+    -fx-spacing: 10px;
+    -fx-alignment: center-right;
+}
+
+.small-screen-buttons {
+    -fx-alignment: center;
+    -fx-orientation: vertical;
+}
+
+.primary-button {
+    -fx-background-color: #27AE60;
+    -fx-text-fill: white;
+    -fx-font-size: 0.9em;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-min-width: 100px;
+    -fx-max-width: 300px;
+}
+
+.primary-button:hover {
+    -fx-background-color: #2ECC71;
+}
+
+.cancel-button {
+    -fx-background-color: #E74C3C;
+    -fx-text-fill: white;
+    -fx-font-size: 0.9em;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-min-width: 100px;
+    -fx-max-width: 300px;
+}
+
+.cancel-button:hover {
+    -fx-background-color: #F5573B;
+}
+
+.secondary-button {
+    -fx-background-color: #3498DB;
+    -fx-text-fill: white;
+    -fx-font-size: 0.8em;
+    -fx-padding: 5 10 5 10;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+    -fx-min-width: 80px;
+    -fx-max-width: 250px;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #41A7F5;
+}
+
+.check-box {
+    -fx-min-height: 30px;
+}
+
+.check-box .box {
+    -fx-background-color: white;
+    -fx-border-color: #BDC3C7;
+    -fx-border-radius: 3px;
+    -fx-min-height: 18px;
+    -fx-min-width: 18px;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #3498DB;
+}
+
+.text-field, .text-area {
+    -fx-max-width: 100%;
+    -fx-min-width: 120px;
+}
+
+.content-area {
+    -fx-spacing: 10px;
+    -fx-padding: 10px;
+}
+
+.high-dpi {
+    -fx-font-size: 1.2em;
+}
