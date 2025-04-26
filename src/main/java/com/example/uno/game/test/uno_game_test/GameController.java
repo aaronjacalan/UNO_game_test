@@ -5,8 +5,11 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -22,6 +25,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.net.URL;
@@ -385,27 +389,36 @@ public class GameController implements Initializable {
     private void checkGameStatus() {
         for (Player player : game.getPlayers()) {
             if (player.hasWon()) {
-                // Game over
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Game Over");
                 alert.setHeaderText(player.getName() + " wins!");
                 alert.setContentText("Game finished.");
                 alert.showAndWait();
 
-                // Start a new game
-                game = new Game(4);
-                isFirstTurn = true;
-                updateUI();
-                updateGameDirectionLabel(true);
+                shutdown();
+
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("gameSetupUI.fxml"));
+                    Parent root = loader.load();
+                    Stage stage = (Stage) statusLabel.getScene().getWindow();
+                    stage.getScene().setRoot(root);
+                    stage.setTitle("UNO - Setup Game");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    game = new Game(4);
+                    isFirstTurn = true;
+                    updateUI();
+                    updateGameDirectionLabel(true);
+                }
                 return;
             } else if (player.hasUno()) {
-                // Player has UNO
                 String message = player.getName() + " has UNO!";
                 statusLabel.setText(message);
                 showNotification("UNO!", Color.PURPLE);
             }
         }
     }
+
 
     private void checkAndStartComputerTurn() {
         Player currentPlayer = game.getCurrentPlayer();

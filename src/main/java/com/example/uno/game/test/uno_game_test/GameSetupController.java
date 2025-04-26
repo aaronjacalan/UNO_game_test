@@ -16,6 +16,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -233,8 +234,15 @@ public class GameSetupController {
 
     @FXML
     private void handleCancel() {
-        Stage stage = (Stage) cancelButton.getScene().getWindow();
-        stage.close();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("MenuUI.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) cancelButton.getScene().getWindow();
+            stage.getScene().setRoot(root);
+            stage.setTitle("UNO - Setup Game");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
